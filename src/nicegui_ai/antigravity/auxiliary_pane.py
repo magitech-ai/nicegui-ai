@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from nicegui import ui
 
@@ -233,13 +233,38 @@ class AuxiliaryPane(ui.element):
         initial_open_diff_comment: bool = False,
         on_close: Callable[[], None] | None = None,
         on_tab_change: Callable[[AuxTabType], None] | None = None,
+        changed_files: list[ChangedFile] | None = None,
+        mvge_mode: bool = False,
+        persona: Any | None = None,
+        checkpoints: list[dict[str, Any]] | None = None,
+        selected_checkpoint_leaf: str | None = None,
+        workspace_files: list[dict[str, Any]] | None = None,
+        artifacts_list: list[dict[str, Any]] | None = None,
+        live_submvges: list[dict[str, Any]] | None = None,
+        on_aux_action: Callable[[str, dict[str, Any]], Any] | None = None,
     ) -> None:
         super().__init__("aside")
         self.is_open = is_open
         self.active_artifact = active_artifact
         self.subagents = subagents or []
+        self.changed_files = (
+            changed_files if changed_files is not None else CHANGED_FILES
+        )
         self.artifact_width = artifact_width
-        self.active_tab: AuxTabType = initial_tab
+        self.mvge_mode = mvge_mode or (persona is not None and getattr(persona, "app_name", "") == "Mvge") or on_aux_action is not None
+        self.checkpoints = list(checkpoints) if checkpoints is not None else []
+        self.selected_checkpoint_leaf = selected_checkpoint_leaf
+        self.workspace_files = list(workspace_files) if workspace_files is not None else []
+        self.artifacts_list = list(artifacts_list) if artifacts_list is not None else []
+        self.live_submvges = list(live_submvges) if live_submvges is not None else []
+        self.on_aux_action = on_aux_action
+
+        # In Mvge mode, default initial tab to review (terminal is in bottom dock)
+        if self.mvge_mode and initial_tab in ("overview", "terminal"):
+            self.active_tab: AuxTabType = "review"
+        else:
+            self.active_tab: AuxTabType = initial_tab
+
         self.plus_dropdown_open = initial_open_plus
         self.customize_overview_open = initial_open_overview_customize
         self.is_maximized = False
@@ -278,16 +303,20 @@ class AuxiliaryPane(ui.element):
             if initial_open_diff_comment
             else ""
         )
-        self.submitted_comments: list[dict[str, str]] = [
-            {
-                "id": "c-1",
-                "file": "src/nicegui_ai/antigravity/auxiliary_pane.py",
-                "line": "223",
-                "author": "Van Luther",
-                "text": "Confirmed overview-panel-row-review matches main.js offset 6587500.",
-                "timestamp": "4m ago",
-            }
-        ]
+        self.submitted_comments: list[dict[str, str]] = (
+            []
+            if self.mvge_mode
+            else [
+                {
+                    "id": "c-1",
+                    "file": "src/nicegui_ai/antigravity/auxiliary_pane.py",
+                    "line": "223",
+                    "author": "Van Luther",
+                    "text": "Confirmed overview-panel-row-review matches main.js offset 6587500.",
+                    "timestamp": "4m ago",
+                }
+            ]
+        )
 
         # Terminal state
         self.terminal_lines: list[dict[str, str]] = [
@@ -380,32 +409,57 @@ class AuxiliaryPane(ui.element):
             "h-[40px] px-2 border-b border-[#222222] items-center justify-between shrink-0 bg-[#101010] w-full gap-1 relative"
         ):
             with ui.row().classes("items-center gap-0.5 relative"):
-                self._tab_icon_btn(
-                    "overview", "overview_tab", "Overview", "aux-tab-overview"
-                )
-                self._tab_icon_btn(
-                    "review",
-                    "review_tab",
-                    "Review Changes",
-                    "aux-tab-review",
-                    badge="3",
-                )
-                self._tab_icon_btn(
-                    "terminal", "terminal_tab", "Terminal", "aux-tab-terminal"
-                )
-                self._tab_icon_btn(
-                    "file", "file_doc", "Files & Artifacts", "aux-tab-file"
-                )
-                self._tab_icon_btn(
-                    "browser", "globe", "Browser Preview", "aux-tab-browser"
-                )
-                self._tab_icon_btn(
-                    "agents",
-                    "subagent",
-                    "Subagents Inspector",
-                    "aux-tab-agents",
-                    badge=str(len(self.subagents)),
-                )
+                if self.mvge_mode:
+                    diff_badge = str(len(self.changed_files))
+                    self._tab_icon_btn(
+                        "review",
+                        "review_tab",
+                        "Review & Checkpoints",
+                        "aux-tab-review",
+                        badge=diff_badge,
+                    )
+                    self._tab_icon_btn(
+                        "file", "file_doc", "Files & Artifacts", "aux-tab-file"
+                    )
+                    agents_badge = (
+                        str(len(self.live_submvges))
+                        if self.live_submvges
+                        else (str(len(self.subagents)) if self.subagents else None)
+                    )
+                    self._tab_icon_btn(
+                        "agents",
+                        "subagent",
+                        "Sub-Mvges Inspector",
+                        "aux-tab-agents",
+                        badge=agents_badge,
+                    )
+                else:
+                    self._tab_icon_btn(
+                        "overview", "overview_tab", "Overview", "aux-tab-overview"
+                    )
+                    self._tab_icon_btn(
+                        "review",
+                        "review_tab",
+                        "Review Changes",
+                        "aux-tab-review",
+                        badge="3",
+                    )
+                    self._tab_icon_btn(
+                        "terminal", "terminal_tab", "Terminal", "aux-tab-terminal"
+                    )
+                    self._tab_icon_btn(
+                        "file", "file_doc", "Files & Artifacts", "aux-tab-file"
+                    )
+                    self._tab_icon_btn(
+                        "browser", "globe", "Browser Preview", "aux-tab-browser"
+                    )
+                    self._tab_icon_btn(
+                        "agents",
+                        "subagent",
+                        "Subagents Inspector",
+                        "aux-tab-agents",
+                        badge=str(len(self.subagents)),
+                    )
 
                 # '+' button with dropdown
                 with ui.element("div").classes("relative ml-0.5"):
@@ -479,6 +533,18 @@ class AuxiliaryPane(ui.element):
                                     )
 
             with ui.row().classes("items-center gap-1"):
+                if self.mvge_mode and self.on_aux_action:
+                    term_btn = (
+                        ui.button(on_click=lambda: self.on_aux_action("toggle_terminal_dock", {}))
+                        .props('flat dense no-caps data-testid="aux-terminal-dock-toggle"')
+                        .classes(
+                            "p-1.5 text-[#6e6e6e] hover:text-[#cccccc] rounded-md hover:bg-[#191919]/60 min-h-0 min-w-0"
+                        )
+                        .tooltip("Toggle Terminal Dock (Ctrl+`)")
+                    )
+                    with term_btn:
+                        AntigravityIcon("terminal_tab", size=14)
+
                 max_btn = (
                     ui.button(on_click=self._toggle_maximized)
                     .props('flat dense no-caps data-testid="aux-fullscreen-toggle"')
@@ -738,9 +804,11 @@ class AuxiliaryPane(ui.element):
 
                 if self.enabled_overview_sections.get("modifiedFiles", True):
                     with self._overview_section(
-                        "modifiedFiles", "Modified Files", f"{len(CHANGED_FILES)} files"
+                        "modifiedFiles",
+                        "Modified Files",
+                        f"{len(self.changed_files)} files",
                     ):
-                        for cf in CHANGED_FILES:
+                        for cf in self.changed_files:
                             with (
                                 ui.button(on_click=lambda: self.set_tab("review"))
                                 .props("flat dense no-caps")
@@ -843,6 +911,9 @@ class AuxiliaryPane(ui.element):
                 "px-3 py-2 border-b border-[#222222] bg-[#151515]/50 items-center justify-between w-full shrink-0"
             ):
                 with ui.row().classes("items-center gap-2"):
+                    ui.label("Review").classes(
+                        "text-xs font-semibold text-[#cccccc] tracking-tight"
+                    )
                     mode_labels = {
                         "all": "All conversation changes",
                         "uncommitted": "Uncommitted changes",
@@ -863,9 +934,11 @@ class AuxiliaryPane(ui.element):
                             "chevron_down", size=11, classes="text-[#6e6e6e]"
                         )
 
+                    total_add = sum(f.additions for f in self.changed_files)
+                    total_del = sum(f.deletions for f in self.changed_files)
                     with ui.row().classes("items-center gap-1 text-[11px] font-mono"):
-                        ui.label("+741").classes("text-emerald-400")
-                        ui.label("-60").classes("text-rose-400")
+                        ui.label(f"+{total_add}").classes("text-emerald-400")
+                        ui.label(f"-{total_del}").classes("text-rose-400")
 
                 with ui.row().classes(
                     "items-center gap-1 bg-[#191919] p-0.5 rounded-md border border-[#222222]"
@@ -880,39 +953,75 @@ class AuxiliaryPane(ui.element):
                             f"{'bg-[#272727] text-[#cccccc]' if active else 'text-[#6e6e6e] hover:text-[#cccccc]'}"
                         )
 
+            # Checkpoints / Leaf Selector Bar (from checkpoint-bridge)
+            if self.checkpoints:
+                with ui.row().classes(
+                    "px-3 py-1.5 bg-[#151515] border-b border-[#222222] items-center gap-2 w-full shrink-0 overflow-x-auto text-[11px]"
+                ):
+                    ui.label("CHECKPOINT:").classes("text-[10px] font-semibold text-[#6e6e6e] tracking-wider shrink-0")
+                    for cp in self.checkpoints:
+                        lid = cp.get("leaf_id", "")
+                        is_cur = lid == self.selected_checkpoint_leaf or (self.selected_checkpoint_leaf is None and cp.get("is_current"))
+                        label = cp.get("label", lid[:8])
+                        (
+                            ui.button(
+                                label,
+                                on_click=lambda leaf=lid: self._handle_select_checkpoint(leaf),
+                            )
+                            .props('flat dense no-caps')
+                            .classes(
+                                f"px-2 py-0.5 rounded text-[10px] font-mono "
+                                f"{'bg-cyan-950 text-cyan-300 border border-cyan-800' if is_cur else 'bg-[#191919] text-[#6e6e6e] hover:text-[#cccccc]'}"
+                            )
+                        )
+
             # File Diffs Accordion List
             with ui.column().classes("flex-1 overflow-y-auto p-3 gap-3 w-full"):
-                for cf in CHANGED_FILES:
-                    expanded = self.expanded_diff_files.get(cf.path, True)
-                    with ui.column().classes(
-                        "w-full border border-[#222222] rounded-lg overflow-hidden bg-[#151515]/30 gap-0"
-                    ):
-                        # File Header
-                        with (
-                            ui.button(
-                                on_click=lambda p=cf.path: self._toggle_diff_file(p)
-                            )
-                            .props(
-                                'flat dense no-caps data-testid="file-diff-accordion-toggle"'
-                            )
-                            .classes(
-                                "w-full px-3 py-2 bg-[#191919] hover:bg-[#272727]/50 flex items-center justify-between font-normal rounded-none"
-                            )
+                ui.label("Changed files").classes(
+                    "text-[11px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
+                if not self.changed_files:
+                    with ui.column().classes("p-8 items-center justify-center text-[#6e6e6e] gap-2 w-full"):
+                        AntigravityIcon("overview_tab", size=24)
+                        ui.label("Working tree clean").classes("text-[12px] font-medium text-[#cccccc]")
+                        ui.label("No uncommitted changes or checkpoint diffs.").classes("text-[11px]")
+                else:
+                    for cf in self.changed_files:
+                        expanded = self.expanded_diff_files.get(cf.path, True)
+                        with ui.column().classes(
+                            "w-full border border-[#222222] rounded-lg overflow-hidden bg-[#151515]/30 gap-0"
                         ):
-                            with ui.row().classes("items-center gap-2"):
-                                AntigravityIcon(
-                                    "chevron_down" if expanded else "chevron_right",
-                                    size=11,
-                                    classes="text-[#6e6e6e]",
+                            # File Header
+                            with (
+                                ui.button(
+                                    on_click=lambda p=cf.path: self._toggle_diff_file(p)
                                 )
-                                ui.label(cf.path).classes(
-                                    "text-[12px] font-mono text-[#cccccc]"
+                                .props(
+                                    'flat dense no-caps data-testid="file-diff-accordion-toggle"'
                                 )
-                            with ui.row().classes(
-                                "items-center gap-1.5 font-mono text-[11px]"
+                                .classes(
+                                    "w-full px-3 py-2 bg-[#191919] hover:bg-[#272727]/50 flex items-center justify-between font-normal rounded-none"
+                                )
                             ):
-                                ui.label(f"+{cf.additions}").classes("text-emerald-400")
-                                ui.label(f"-{cf.deletions}").classes("text-rose-400")
+                                with ui.row().classes("items-center gap-2"):
+                                    AntigravityIcon(
+                                        "chevron_down" if expanded else "chevron_right",
+                                        size=11,
+                                        classes="text-[#6e6e6e]",
+                                    )
+                                    ui.label(cf.path).classes(
+                                        "text-[12px] font-mono text-[#cccccc]"
+                                    )
+                                with ui.row().classes(
+                                    "items-center gap-1.5 font-mono text-[11px]"
+                                ):
+                                    ui.label(f"+{cf.additions}").classes("text-emerald-400")
+                                    ui.label(f"-{cf.deletions}").classes("text-rose-400")
+                                    if self.mvge_mode:
+                                        ui.button(
+                                            "Revert",
+                                            on_click=lambda p=cf.path: self._handle_restore_file(p),
+                                        ).props("flat dense no-caps size=xs color=negative").tooltip("Restore file from checkpoint")
 
                         if expanded:
                             with (
@@ -1117,7 +1226,7 @@ class AuxiliaryPane(ui.element):
                 ):
                     cmd_input = (
                         ui.input(
-                            placeholder="Run shell command in /mnt/storage/projects/nicegui-ai...",
+                            placeholder="Run shell command in workspace...",
                             value=self.terminal_input,
                             on_change=lambda e: setattr(
                                 self, "terminal_input", str(e.value)
@@ -1143,7 +1252,7 @@ class AuxiliaryPane(ui.element):
                     "px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
                 )
                 processes = [
-                    ("proc-1", "bash (nicegui-ai)", "Clone Antigravity UI"),
+                    ("proc-1", "bash (workspace)", "Clone Antigravity UI"),
                     ("proc-2", "uv run pytest", "ModelSelector Reasoning"),
                 ]
                 for pid, plabel, pconv in processes:
@@ -1172,7 +1281,7 @@ class AuxiliaryPane(ui.element):
         self.terminal_lines.append(
             {
                 "cmd": cmd,
-                "output": f"[Executed in /mnt/storage/projects/nicegui-ai]: {cmd} (exit code 0)",
+                "output": f"[Executed in workspace]: {cmd} (exit code 0)",
             }
         )
         self.terminal_input = ""
@@ -1186,12 +1295,61 @@ class AuxiliaryPane(ui.element):
     # TAB 4: ARTIFACT / FILE VIEWER (artifact-view, markdown-frontmatter)
     # =========================================================================
     def _render_file_tab(self) -> None:
-        file_entry = SOURCE_FILES.get(
-            self.selected_source_file,
-            SOURCE_FILES["antigravity_rea_reconstruction.md"],
-        )
-        frontmatter = file_entry.get("frontmatter")
-        content = str(file_entry.get("content", ""))
+        file_keys: list[str] = []
+        if self.workspace_files:
+            file_keys = [f.get("name", f.get("path", "")) for f in self.workspace_files]
+        elif self.artifacts_list:
+            file_keys = [a.get("title", "") for a in self.artifacts_list]
+        elif not self.mvge_mode:
+            file_keys = list(SOURCE_FILES.keys())
+
+        if self.active_artifact:
+            title = self.active_artifact.title
+            content = self.active_artifact.content
+            lang = "Markdown" if self.active_artifact.type == "markdown" else "Python"
+            frontmatter = None
+        elif self.workspace_files:
+            file_entry = next(
+                (
+                    f
+                    for f in self.workspace_files
+                    if f.get("name") == self.selected_source_file
+                    or f.get("path") == self.selected_source_file
+                ),
+                self.workspace_files[0],
+            )
+            title = file_entry.get("name", file_entry.get("path", "file"))
+            frontmatter = file_entry.get("frontmatter")
+            content = str(file_entry.get("content", ""))
+            lang = str(file_entry.get("lang", "Markdown"))
+        elif self.artifacts_list:
+            art_entry = next(
+                (
+                    a
+                    for a in self.artifacts_list
+                    if a.get("title") == self.selected_source_file
+                    or a.get("id") == self.selected_source_file
+                ),
+                self.artifacts_list[0],
+            )
+            title = str(art_entry.get("title", "Artifact"))
+            frontmatter = None
+            content = str(art_entry.get("content", ""))
+            lang = "Markdown" if art_entry.get("type") == "markdown" else "Python"
+        elif not self.mvge_mode:
+            file_entry = SOURCE_FILES.get(
+                self.selected_source_file,
+                SOURCE_FILES["antigravity_rea_reconstruction.md"],
+            )
+            title = self.selected_source_file
+            frontmatter = file_entry.get("frontmatter")
+            content = str(file_entry.get("content", ""))
+            lang = str(file_entry.get("lang", "Markdown"))
+        else:
+            title = "No Workspace Files"
+            frontmatter = None
+            content = "No workspace files or active Tome artifacts to display."
+            lang = "Markdown"
 
         with (
             ui.row()
@@ -1209,8 +1367,11 @@ class AuxiliaryPane(ui.element):
                     ui.label("Workspace Files").classes(
                         "px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
                     )
-                    for fname in SOURCE_FILES:
-                        is_sel = fname == self.selected_source_file
+                    for fname in file_keys:
+                        is_sel = fname == (
+                            self.selected_source_file
+                            or (file_keys[0] if file_keys else "")
+                        )
                         with (
                             ui.button(
                                 on_click=lambda f=fname: self._select_source_file(f)
@@ -1235,10 +1396,8 @@ class AuxiliaryPane(ui.element):
                         ).classes(
                             "p-1 text-[#6e6e6e] hover:text-[#cccccc] min-h-0 min-w-0"
                         )
-                        ui.label(self.selected_source_file).classes(
-                            "text-[12px] font-mono text-[#cccccc]"
-                        )
-                    ui.label(str(file_entry.get("lang", "Markdown"))).classes(
+                        ui.label(title).classes("text-[12px] font-mono text-[#cccccc]")
+                    ui.label(lang).classes(
                         "text-[10px] px-2 py-0.5 rounded bg-[#191919] border border-[#222222] text-[#6e6e6e]"
                     )
 
@@ -1257,7 +1416,7 @@ class AuxiliaryPane(ui.element):
                                 ui.label(str(k)).classes("font-mono text-[#6e6e6e]")
                                 ui.label(str(v)).classes("font-mono text-[#cccccc]")
 
-                if str(file_entry.get("lang", "")).startswith("Markdown"):
+                if lang.startswith("Markdown"):
                     ui.markdown(content).classes(
                         "text-[12px] text-[#cccccc] leading-relaxed w-full"
                     )
@@ -1330,6 +1489,10 @@ class AuxiliaryPane(ui.element):
     # TAB 6: SUBAGENTS INSPECTOR (subagent-tab-sidebar, approve/deny/stop)
     # =========================================================================
     def _render_subagents_tab(self) -> None:
+        if self.mvge_mode:
+            self._render_mvge_subagents_view()
+            return
+
         selected = next(
             (a for a in self.subagents if a.id == self.selected_subagent_id),
             self.subagents[0] if self.subagents else None,
@@ -1424,6 +1587,96 @@ class AuxiliaryPane(ui.element):
                         ui.label(
                             f"Current status: {self.subagent_states.get(selected.id, selected.state)}"
                         ).classes("text-[11px] font-mono text-emerald-400")
+
+    def _render_mvge_subagents_view(self) -> None:
+        if not self.live_submvges:
+            with ui.column().classes("flex-1 p-8 items-center justify-center text-[#6e6e6e] gap-3 text-center"):
+                AntigravityIcon("subagent", size=28, classes="text-[#cccccc]")
+                ui.label("No Sub-Mvges Active").classes("text-[13px] font-medium text-[#cccccc]")
+                ui.label(
+                    "Sub-Mvges are isolated child Mvge instances spawned by summon_mvge or delegate_to_mvge.\n"
+                    "They execute in their own persistent child Tomes with optional Git worktree isolation."
+                ).classes("text-[11px] max-w-sm whitespace-pre-line")
+            return
+
+        selected_id = self.selected_subagent_id or self.live_submvges[0]["sub_mvge_id"]
+        selected = next((m for m in self.live_submvges if m.get("sub_mvge_id") == selected_id), self.live_submvges[0])
+
+        with ui.row().props('data-testid="subagents-inspector-view"').classes("flex-1 w-full h-full overflow-hidden gap-0 no-wrap"):
+            # Submvge Sidebar
+            with ui.column().classes("w-[200px] h-full bg-[#151515] border-r border-[#222222] p-2 shrink-0 gap-1 overflow-y-auto"):
+                ui.label("Child Sub-Mvges").classes("px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+                for item in self.live_submvges:
+                    mid = item.get("sub_mvge_id", "")
+                    is_sel = mid == selected.get("sub_mvge_id")
+                    status = item.get("status", "running")
+                    status_color = "text-emerald-400" if status == "running" else "text-[#6e6e6e]"
+                    with ui.button(on_click=lambda i=mid: self._select_subagent(i)).props("flat dense no-caps").classes(
+                        f"w-full px-2 py-1.5 rounded text-left flex flex-col items-start gap-0.5 font-normal "
+                        f"{'bg-[#272727] text-[#cccccc]' if is_sel else 'text-[#6e6e6e] hover:text-[#cccccc] hover:bg-[#191919]'}"
+                    ):
+                        with ui.row().classes("items-center justify-between w-full"):
+                            ui.label(item.get("role", "worker")).classes("text-[11px] font-medium truncate")
+                            ui.badge(status, color="positive" if status == "running" else "grey-8").props("dense text-[9px]")
+                        ui.label(f"{item.get('model_id', 'inherit')} • {item.get('mana_used', 0)} mana").classes(f"text-[9px] font-mono {status_color}")
+
+            # Submvge Detail
+            with ui.column().classes("flex-1 h-full p-4 overflow-y-auto gap-3"):
+                with ui.row().classes("w-full items-center justify-between pb-2 border-b border-[#222222]"):
+                    with ui.column().classes("gap-0.5"):
+                        with ui.row().classes("items-center gap-2"):
+                            ui.label(selected.get("role", "Sub-Mvge").capitalize()).classes("text-[14px] font-medium text-[#cccccc]")
+                            ui.badge(selected.get("status", "running"), color="positive" if selected.get("status") == "running" else "grey-8").props("dense text-[10px]")
+                        ui.label(f"ID: {selected.get('sub_mvge_id')} • Model: {selected.get('model_id')} • Workspace: {selected.get('workspace', 'inherit')}").classes("text-[10px] font-mono text-[#6e6e6e]")
+                    with ui.row().classes("items-center gap-1.5"):
+                        ui.button(
+                            "Kill",
+                            icon="close",
+                            on_click=lambda: self._handle_kill_submvge(selected.get("sub_mvge_id", "")),
+                        ).props("flat dense no-caps color=negative").classes("text-[11px]")
+
+                if selected.get("effective_spells"):
+                    with ui.row().classes("items-center gap-1 flex-wrap"):
+                        ui.label("Spells:").classes("text-[10px] text-[#6e6e6e]")
+                        for sp in selected["effective_spells"]:
+                            ui.badge(sp, color="dark").props("dense text-[10px] font-mono text-[#cccccc]")
+
+                if selected.get("summary"):
+                    with ui.column().classes("w-full p-2.5 rounded bg-[#191919] border border-[#222222] gap-1"):
+                        ui.label("Current Focus / Summary").classes("text-[10px] font-semibold text-[#6e6e6e] uppercase")
+                        ui.label(selected["summary"]).classes("text-[11px] text-[#cccccc]")
+
+                # Message child submvge input
+                with ui.column().classes("w-full mt-auto p-2 rounded bg-[#151515] border border-[#222222] gap-1.5"):
+                    ui.label("Send Steering Message to Child").classes("text-[10px] text-[#6e6e6e] uppercase font-semibold")
+                    msg_input = ui.input(placeholder="Send follow-up instruction to sub-mvge...").props("dense borderless").classes("w-full font-mono text-[11px] text-[#cccccc] bg-[#101010] px-2 rounded")
+                    target_sub_id = selected.get("sub_mvge_id", "")
+                    with ui.row().classes("justify-end w-full"):
+                        ui.button(
+                            "Send",
+                            on_click=lambda inp=msg_input, sid=target_sub_id: (
+                                self._handle_message_submvge(sid, inp.value),
+                                setattr(inp, "value", ""),
+                            ),
+                        ).props("flat dense no-caps color=primary").classes("text-[11px]")
+
+    def _handle_select_checkpoint(self, leaf_id: str) -> None:
+        self.selected_checkpoint_leaf = leaf_id
+        if self.on_aux_action:
+            self.on_aux_action("select_checkpoint_leaf", {"leaf_id": leaf_id})
+        self.render()
+
+    def _handle_restore_file(self, path: str) -> None:
+        if self.on_aux_action:
+            self.on_aux_action("restore_checkpoint_file", {"path": path, "leaf_id": self.selected_checkpoint_leaf})
+
+    def _handle_message_submvge(self, sub_mvge_id: str, message: str) -> None:
+        if self.on_aux_action:
+            self.on_aux_action("message_submvge", {"sub_mvge_id": sub_mvge_id, "message": message})
+
+    def _handle_kill_submvge(self, sub_mvge_id: str) -> None:
+        if self.on_aux_action:
+            self.on_aux_action("kill_submvge", {"sub_mvge_id": sub_mvge_id})
 
     def _select_subagent(self, agent_id: str) -> None:
         self.selected_subagent_id = agent_id

@@ -69,23 +69,31 @@ class AntigravityModelSelector(ui.element):
         on_select_model: Callable[[str], None] | None = None,
         on_open_models_settings: Callable[[], None] | None = None,
         initial_open: bool = False,
+        models: list[AntigravityModelDef] | None = None,
     ) -> None:
         super().__init__("div")
+        self.models: list[AntigravityModelDef] = (
+            models if models is not None and len(models) > 0 else ANTIGRAVITY_MODELS
+        )
         self.selected_model = selected_model
         self.on_select_model = on_select_model
         self.on_open_models_settings = on_open_models_settings
         self.is_open: bool = initial_open
-        self.hovered_model_id: str = "gemini-3.8-flash"
+        self.hovered_model_id: str = self.models[0].id
 
         self.classes("relative inline-flex items-center")
         self.render_selector()
 
     def _parse_selected(self) -> tuple[AntigravityModelDef, str | None]:
-        for m in ANTIGRAVITY_MODELS:
-            if self.selected_model.startswith(m.short_name):
+        for m in self.models:
+            if (
+                self.selected_model == m.id
+                or self.selected_model == m.name
+                or self.selected_model.startswith(m.short_name)
+            ):
                 rest = self.selected_model.removeprefix(m.short_name).strip()
                 return m, (rest if rest else m.default_effort)
-        return ANTIGRAVITY_MODELS[0], "High"
+        return self.models[0], self.models[0].default_effort
 
     def _choose_model(self, model_def: AntigravityModelDef, effort: str | None) -> None:
         eff = effort or model_def.default_effort
@@ -104,7 +112,7 @@ class AntigravityModelSelector(ui.element):
         self.clear()
         active_def, active_effort = self._parse_selected()
         hovered_def = next(
-            (m for m in ANTIGRAVITY_MODELS if m.id == self.hovered_model_id),
+            (m for m in self.models if m.id == self.hovered_model_id),
             active_def,
         )
 
@@ -156,7 +164,7 @@ class AntigravityModelSelector(ui.element):
                                 "text-[10px] font-mono text-[#6e6e6e]"
                             )
 
-                        for m in ANTIGRAVITY_MODELS:
+                        for m in self.models:
                             is_curr = m.id == active_def.id
                             is_hov = m.id == hovered_def.id
                             row_cls = (

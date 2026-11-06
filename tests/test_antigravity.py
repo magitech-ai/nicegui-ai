@@ -22,6 +22,7 @@ from nicegui_ai.antigravity import (
     create_default_subagents,
     get_antigravity_svg,
 )
+from nicegui_ai.antigravity.state import ProjectConfig
 
 
 def test_antigravity_theme_tokens():
@@ -300,3 +301,87 @@ def test_antigravity_app_orchestrator_and_deep_links():
     app._handle_send_message("Run full verification", [])
     assert app._active_session().messages[-2].content == "Run full verification"
     assert app._active_session().messages[-1].role == "agent"
+
+
+def test_antigravity_app_callbacks():
+    selected_project = []
+    deleted_session = []
+    opened_settings = []
+
+    projs = [
+        ProjectConfig(
+            id="proj-mvge",
+            name="mvge-desktop",
+            folders=["/mnt/storage/projects/mvge-desktop"],
+            active_conversations=2,
+            archived_conversations=0,
+        )
+    ]
+
+    app = AntigravityApp(
+        projects=projs,
+        on_select_project=lambda p: selected_project.append(p),
+        on_delete_session=lambda s: deleted_session.append(s),
+        on_open_settings=lambda screen: opened_settings.append(screen),
+    )
+
+    assert app.active_project_id == "proj-mvge"
+    assert len(app.settings.projects) == 1
+
+    app._handle_select_project("proj-mvge")
+    assert selected_project == ["proj-mvge"]
+
+    # Deleting active session resets to session-zero-state
+    active_id = app.active_session_id
+    app._handle_delete_session(active_id)
+    assert deleted_session == [active_id]
+    assert app.active_session_id == "session-zero-state"
+
+    # Opening settings invokes callback without forcing in-memory modal open
+    app._handle_open_settings("models")
+    assert opened_settings == ["models"]
+    assert app.settings_open is False
+
+
+def test_chat_view_composer_hints_and_enter_handling():
+    sent = []
+    cv = ChatView(
+        session=create_default_sessions()[0],
+        all_sessions=create_default_sessions(),
+        projects=[],
+        settings=create_default_settings(),
+        selected_model="test-model",
+        on_send_message=lambda text, atts: sent.append(text),
+    )
+    cv.input_text = "Hello world"
+    cv._handle_enter_press()
+    assert sent == ["Hello world"]
+
+
+def test_antigravity_app_settings_change_callback():
+    changed = []
+    app = AntigravityApp(
+        on_settings_change=lambda s: changed.append(s),
+    )
+    app.settings.default_model = "google/gemini-2.5-pro"
+    app._handle_settings_change(app.settings)
+    assert len(changed) == 1
+    assert changed[0].default_model == "google/gemini-2.5-pro"
+
+
+def test_settings_modal_project_screen_contemplation():
+    settings = create_default_settings()
+    skills = create_default_skills()
+    changed = []
+    sm = SettingsModal(
+        is_open=True,
+        initial_screen="project:proj-mvge",
+        settings=settings,
+        skills=skills,
+        on_settings_change=lambda s: changed.append(s),
+    )
+    proj = next(p for p in settings.projects if p.id == "proj-mvge")
+    sm._update_project_field(proj, "contemplation_level", "x-high")
+    assert proj.contemplation_level == "x-high"
+    assert len(changed) == 1
+    assert changed[0].projects[0].contemplation_level == "x-high"

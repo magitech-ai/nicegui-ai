@@ -1,7 +1,7 @@
 """1:1 Antigravity 2-Column Settings Modal (13 Core Screens, Per-Project Settings, and 11 Drill-Down Subviews)."""
 
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
 
 from nicegui import ui
 
@@ -24,11 +24,28 @@ class SettingsModal(ui.element):
         skills: list[SkillItem] | None = None,
         on_close: Callable[[], None] | None = None,
         on_settings_change: Callable[[AppSettings], None] | None = None,
+        persona: Any | None = None,
+        mvge_data: dict[str, Any] | None = None,
+        on_mvge_action: Callable[[str, dict[str, Any]], Any] | None = None,
     ) -> None:
         super().__init__("div")
         self.is_open = is_open
 
-        self.active_screen = self._normalize_screen(initial_screen)
+        self.mvge_mode = (
+            (mvge_data is not None)
+            or (persona is not None and getattr(persona, "app_name", "") == "Mvge")
+            or (on_mvge_action is not None)
+        )
+        self.mvge_data: dict[str, Any] = mvge_data or {}
+        self.on_mvge_action = on_mvge_action
+
+        # In Mvge mode, default initial screen general/models to realms
+        normalized = self._normalize_screen(initial_screen)
+        if self.mvge_mode and normalized in ("general", "models", "billing"):
+            self.active_screen = "realms"
+        else:
+            self.active_screen = normalized
+
         self.active_subview: str | None = None
         self.settings = settings
         self.skills = skills or []
@@ -108,61 +125,98 @@ class SettingsModal(ui.element):
             "w-[210px] h-full bg-[#151515] border-r border-[#222222] flex flex-col justify-between shrink-0 gap-0"
         ):
             with ui.column().classes("flex-1 w-full overflow-y-auto p-2 gap-3"):
-                # Agent Section
-                with ui.column().classes("w-full gap-0.5"):
-                    ui.label("Agent").classes(
-                        "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
-                    )
-                    agent_items = [
-                        ("general", "General"),
-                        ("browser", "Browser"),
-                        ("notifications", "Notifications"),
-                        ("terminal", "Terminal"),
-                        ("workspaces", "Workspaces"),
-                        ("labs", "Labs"),
-                    ]
-                    for sid, label in agent_items:
-                        self._nav_item(sid, label)
+                if self.mvge_mode:
+                    # Mvge Engine Section
+                    with ui.column().classes("w-full gap-0.5"):
+                        ui.label("Mvge Engine").classes(
+                            "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                        )
+                        mvge_items = [
+                            ("realms", "Realms & API Keys"),
+                            ("approval", "Approval & Audit"),
+                            ("trust", "Workspace Trust"),
+                            ("compaction", "Compaction & Mana"),
+                            ("diagnostics", "Diagnostics & MCP"),
+                        ]
+                        for sid, label in mvge_items:
+                            self._nav_item(sid, label)
 
-                # App Section
-                with ui.column().classes("w-full gap-0.5"):
-                    ui.label("App").classes(
-                        "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
-                    )
-                    app_items = [
-                        ("appearance", "Appearance"),
-                        ("editor", "Editor"),
-                        ("billing", "Billing"),
-                        ("models", "Models"),
-                        ("customizations", "Customizations"),
-                        ("advanced", "Advanced"),
-                        ("about", "About"),
-                    ]
-                    for sid, label in app_items:
-                        self._nav_item(sid, label)
+                    # Projects Section
+                    with ui.column().classes("w-full gap-0.5"):
+                        ui.label("Projects").classes(
+                            "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                        )
+                        for proj in self.settings.projects:
+                            self._nav_item(f"project:{proj.id}", proj.name)
+                        self._nav_item("not-in-project", "Not in Project")
 
-                # Projects Section
-                with ui.column().classes("w-full gap-0.5"):
-                    ui.label("Projects").classes(
-                        "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
-                    )
-                    for proj in self.settings.projects:
-                        self._nav_item(f"project:{proj.id}", proj.name)
-                    self._nav_item("not-in-project", "Not in Project")
+                    # Preferences Section
+                    with ui.column().classes(
+                        "w-full gap-0.5 pt-1 border-t border-[#222222]"
+                    ):
+                        self._nav_item("appearance", "Appearance")
+                        self._nav_item("shortcuts", "Shortcuts")
+                else:
+                    # Agent Section
+                    with ui.column().classes("w-full gap-0.5"):
+                        ui.label("Agent").classes(
+                            "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                        )
+                        agent_items = [
+                            ("general", "General"),
+                            ("browser", "Browser"),
+                            ("notifications", "Notifications"),
+                            ("terminal", "Terminal"),
+                            ("workspaces", "Workspaces"),
+                            ("labs", "Labs"),
+                        ]
+                        for sid, label in agent_items:
+                            self._nav_item(sid, label)
 
-                # Misc Section
-                with ui.column().classes(
-                    "w-full gap-0.5 pt-1 border-t border-[#222222]"
-                ):
-                    self._nav_item("shortcuts", "Shortcuts")
-                    self._nav_item("feedback", "Provide Feedback")
+                    # App Section
+                    with ui.column().classes("w-full gap-0.5"):
+                        ui.label("App").classes(
+                            "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                        )
+                        app_items = [
+                            ("appearance", "Appearance"),
+                            ("editor", "Editor"),
+                            ("billing", "Billing"),
+                            ("models", "Models"),
+                            ("customizations", "Customizations"),
+                            ("advanced", "Advanced"),
+                            ("about", "About"),
+                        ]
+                        for sid, label in app_items:
+                            self._nav_item(sid, label)
+
+                    # Projects Section
+                    with ui.column().classes("w-full gap-0.5"):
+                        ui.label("Projects").classes(
+                            "px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                        )
+                        for proj in self.settings.projects:
+                            self._nav_item(f"project:{proj.id}", proj.name)
+                        self._nav_item("not-in-project", "Not in Project")
+
+                    # Misc Section
+                    with ui.column().classes(
+                        "w-full gap-0.5 pt-1 border-t border-[#222222]"
+                    ):
+                        self._nav_item("shortcuts", "Shortcuts")
+                        self._nav_item("feedback", "Provide Feedback")
 
             # Bottom Account Footer
             with ui.column().classes("p-2 border-t border-[#222222] w-full shrink-0"):
-                self._nav_item(
-                    "account",
-                    f"{self.settings.account_name} ({self.settings.plan_name})",
-                )
+                if self.mvge_mode:
+                    diag = self.mvge_data.get("diagnostics", {})
+                    ver = diag.get("mvge_version", "0.3.0")
+                    self._nav_item("about", f"Mvge v{ver}")
+                else:
+                    self._nav_item(
+                        "account",
+                        f"{self.settings.account_name} ({self.settings.plan_name})",
+                    )
 
     def _nav_item(self, screen_id: str, label: str) -> None:
         is_active = self.active_screen == screen_id
@@ -211,6 +265,16 @@ class SettingsModal(ui.element):
             with ui.column().classes("flex-1 w-full overflow-y-auto p-6 gap-5"):
                 if self.active_subview:
                     self._render_subview_content(self.active_subview)
+                elif self.mvge_mode and self.active_screen in ("realms", "models", "general", "billing"):
+                    self._render_mvge_realms_screen()
+                elif self.mvge_mode and self.active_screen == "approval":
+                    self._render_mvge_approval_screen()
+                elif self.mvge_mode and self.active_screen == "trust":
+                    self._render_mvge_trust_screen()
+                elif self.mvge_mode and self.active_screen == "compaction":
+                    self._render_mvge_compaction_screen()
+                elif self.mvge_mode and self.active_screen in ("diagnostics", "about", "advanced"):
+                    self._render_mvge_diagnostics_screen()
                 elif self.active_screen == "general":
                     self._render_general_screen()
                 elif self.active_screen == "browser":
@@ -252,6 +316,17 @@ class SettingsModal(ui.element):
     def _screen_title(self) -> str:
         if self.active_subview:
             return f"Settings / {self.active_subview.replace('-', ' ').title()}"
+        if self.mvge_mode:
+            titles = {
+                "realms": "Realms & API Keys",
+                "approval": "Approval Policy & Audit Trail",
+                "trust": "Workspace Trust & Steering",
+                "compaction": "Compaction & Mana Pool",
+                "diagnostics": "Diagnostics & MCP",
+                "about": "About Mvge",
+            }
+            if self.active_screen in titles:
+                return titles[self.active_screen]
         if self.active_screen.startswith("project:"):
             pid = self.active_screen.split(":", 1)[1]
             proj = next((p for p in self.settings.projects if p.id == pid), None)
@@ -464,6 +539,64 @@ class SettingsModal(ui.element):
         )
 
     def _render_models_screen(self) -> None:
+        with ui.column().classes(
+            "w-full p-4 bg-[#191919] border border-[#222222] rounded-xl gap-3"
+        ):
+            ui.label("Provider API Key").classes(
+                "text-[13px] font-medium text-[#cccccc]"
+            )
+            ui.label(
+                "API key for OpenRouter or custom Realm providers (stored in ~/.mvge/config.json)"
+            ).classes("text-[11px] text-[#6e6e6e] -mt-2")
+            ui.input(
+                value=self.settings.api_key,
+                password=True,
+                password_toggle_button=True,
+                on_change=lambda e: self._update_setting(
+                    "api_key", str(e.value or ""), rerender=False
+                ),
+            ).props('outlined dense dark data-testid="settings-api-key-input"').classes(
+                "w-full bg-[#101010] text-[12px]"
+            )
+
+        self._setting_select_row(
+            "Default Model",
+            "Default model identifier for new conversations",
+            self.settings.default_model,
+            list(
+                dict.fromkeys(
+                    [
+                        self.settings.default_model,
+                        "openrouter/auto",
+                        "google/gemini-2.5-flash",
+                        "google/gemini-2.5-pro",
+                        "anthropic/claude-3.7-sonnet",
+                        "openai/gpt-4.1",
+                    ]
+                )
+            ),
+            lambda v: self._update_setting("default_model", v),
+        )
+
+        self._setting_select_row(
+            "Mana Limit (Max Tokens)",
+            "Maximum context window token limit per turn",
+            str(self.settings.mana_limit),
+            ["32000", "64000", "128000", "200000", "1000000"],
+            lambda v: self._update_setting("mana_limit", int(v)),
+        )
+
+        self._setting_select_row(
+            "Sampling Temperature",
+            "Model sampling temperature (0.0 for deterministic, 1.0 for creative)",
+            f"{self.settings.temperature:.1f}",
+            ["0.0", "0.2", "0.5", "0.7", "1.0"],
+            lambda v: self._update_setting("temperature", float(v)),
+        )
+
+        ui.label("Available Frontier Quotas").classes(
+            "text-[12px] font-semibold text-[#888888] uppercase tracking-wider pt-2"
+        )
         models_quota = [
             ("Gemini 3.8 Pro", "Thinking & Deep Architecture", "94% remaining"),
             ("Gemini 3.8 Flash High", "High-Speed Agentic Coding", "98% remaining"),
@@ -575,6 +708,13 @@ class SettingsModal(ui.element):
             "Permit outbound HTTP/HTTPS inside sandboxed commands for this project",
             proj.sandbox_allow_network,
             lambda v: self._update_project_field(proj, "sandbox_allow_network", v),
+        )
+        self._setting_select_row(
+            "Contemplation & Reasoning Level",
+            "Effort spent on reasoning and internal monologue for this project",
+            proj.contemplation_level,
+            ["none", "low", "medium", "high", "x-high"],
+            lambda v: self._update_project_field(proj, "contemplation_level", v),
         )
 
     def _update_project_field(
@@ -788,3 +928,207 @@ class SettingsModal(ui.element):
             self.on_settings_change(self.settings)
         if rerender:
             self.render()
+
+    # =========================================================================
+    # MVGE 5 CORE SCREENS & HANDLERS
+    # =========================================================================
+    def _render_mvge_realms_screen(self) -> None:
+        realms = self.mvge_data.get("realms", [])
+        with ui.column().classes("w-full gap-4"):
+            ui.label("Realms & API Keys").classes("text-[16px] font-semibold text-[#cccccc]")
+            ui.label("Configure inference endpoints and API credentials for Mvge providers.").classes("text-[12px] text-[#6e6e6e]")
+            if not realms:
+                realms = [
+                    {"id": "opencode", "name": "OpenCode", "base_url": "https://opencode.ai/inference/openai/v1", "env_var": "OPENCODE_API_KEY", "is_router": False, "has_key": False, "masked_key": "", "default_model": "opencode/big-pickle", "keyless_models": ["opencode/big-pickle", "opencode/space-bunny-free"], "rune_installed": True, "rune_name": "opencode-realm"},
+                    {"id": "openrouter", "name": "OpenRouter", "base_url": "https://openrouter.ai/api/v1", "env_var": "OPENROUTER_API_KEY", "is_router": True, "has_key": False, "masked_key": "", "default_model": "openrouter/free", "keyless_models": [], "rune_installed": True, "rune_name": "openrouter-realm"},
+                    {"id": "pollinations", "name": "Pollinations", "base_url": "https://text.pollinations.ai/openai", "env_var": "POLLINATIONS_API_KEY", "is_router": False, "has_key": False, "masked_key": "", "default_model": "pollinations/openai", "keyless_models": ["pollinations/openai"], "rune_installed": True, "rune_name": "pollinations-realm"},
+                ]
+            for r in realms:
+                with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2.5"):
+                    with ui.row().classes("items-center justify-between w-full"):
+                        with ui.row().classes("items-center gap-2"):
+                            ui.label(r.get("name", r.get("id"))).classes("text-[14px] font-medium text-[#cccccc]")
+                            ui.badge("Router" if r.get("is_router") else "Direct", color="cyan-9").props("dense text-[10px]")
+                            if r.get("has_key"):
+                                ui.badge("Configured", color="positive").props("dense text-[10px]")
+                            else:
+                                ui.badge("Keyless" if r.get("keyless_models") else "Needs Key", color="grey-8").props("dense text-[10px]")
+                        if not r.get("rune_installed", True):
+                            rn = r.get("rune_name", "")
+                            ui.button(
+                                "Install Rune",
+                                on_click=lambda name=rn: self._handle_install_rune(name),
+                            ).props("flat dense no-caps color=primary text-[11px]")
+                    ui.label(f"Base URL: {r.get('base_url')} • Env: {r.get('env_var')}").classes("text-[11px] font-mono text-[#6e6e6e]")
+                    if r.get("keyless_models"):
+                        with ui.row().classes("items-center gap-1 flex-wrap"):
+                            ui.label("Free models:").classes("text-[10px] text-[#6e6e6e]")
+                            for km in r["keyless_models"]:
+                                ui.badge(km, color="dark").props("dense text-[10px] font-mono text-[#aaaaaa]")
+                    with ui.row().classes("items-center gap-2 w-full mt-1"):
+                        key_input = ui.input(
+                            placeholder=r.get("masked_key") or f"Enter {r.get('env_var')}...",
+                            password=True,
+                        ).props("dense borderless").classes("flex-1 px-2.5 py-1 bg-[#101010] border border-[#222222] rounded font-mono text-[11px] text-[#cccccc]")
+                        rid = r.get("id", "")
+                        ui.button(
+                            "Save Key",
+                            on_click=lambda inp=key_input, realm_id=rid: self._handle_save_realm_key(realm_id, inp.value),
+                        ).props("flat dense no-caps color=primary").classes("text-[11px]")
+                        if r.get("has_key"):
+                            ui.button(
+                                "Clear",
+                                on_click=lambda realm_id=rid: self._handle_clear_realm_key(realm_id),
+                            ).props("flat dense no-caps color=negative").classes("text-[11px]")
+
+    def _render_mvge_approval_screen(self) -> None:
+        appr = self.mvge_data.get("approval", {})
+        warnings = appr.get("warnings", [])
+        with ui.column().classes("w-full gap-4"):
+            ui.label("Approval Policy & Audit Trail").classes("text-[16px] font-semibold text-[#cccccc]")
+            ui.label("Fail-closed spell execution gate, code-digest grants, and durable audit log.").classes("text-[12px] text-[#6e6e6e]")
+            if warnings:
+                with ui.column().classes("w-full p-3 rounded-lg bg-amber-950/40 border border-amber-600/50 gap-1"):
+                    for w in warnings:
+                        with ui.row().classes("items-center gap-2"):
+                            AntigravityIcon("alert", size=14, classes="text-amber-400")
+                            ui.label(w).classes("text-[12px] text-amber-200")
+            sess = appr.get("session", {})
+            with ui.row().classes("w-full items-center justify-between p-3 rounded-xl bg-[#151515] border border-[#222222]"):
+                with ui.column().classes("gap-0.5"):
+                    ui.label("Session Approve All").classes("text-[13px] font-medium text-[#cccccc]")
+                    ui.label("Auto-allows non-schemaless spells for the current Tome").classes("text-[11px] text-[#6e6e6e]")
+                ui.switch(
+                    value=sess.get("approve_all_active", False),
+                    on_change=lambda e: self._handle_toggle_session_approve_all(e.value),
+                ).props("dense")
+            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
+                ui.label("Always-Allowed Spell Grants").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+                allowed = appr.get("always_allowed", [])
+                if not allowed:
+                    ui.label("No active persistent allow grants.").classes("text-[11px] text-[#6e6e6e] italic")
+                for grant in allowed:
+                    with ui.row().classes("items-center justify-between w-full py-1 border-b border-[#222222]/50"):
+                        with ui.row().classes("items-center gap-2"):
+                            ui.label(grant.get("spell", "")).classes("font-mono text-[12px] text-emerald-400")
+                            ui.badge(grant.get("scope_label", "Project"), color="dark").props("dense text-[10px]")
+                            for c in grant.get("constraint_labels", []):
+                                ui.badge(c, color="cyan-9").props("dense text-[9px]")
+                        gid = grant.get("id", "")
+                        ui.button(
+                            "Revoke",
+                            on_click=lambda g=gid: self._handle_revoke_grant("allow_rule", g),
+                        ).props("flat dense no-caps color=negative text-[11px]")
+            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
+                ui.label("Never-Allowed (Deny) Rules").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+                denied = appr.get("never_allowed", [])
+                if not denied:
+                    ui.label("No active persistent deny rules.").classes("text-[11px] text-[#6e6e6e] italic")
+                for d in denied:
+                    with ui.row().classes("items-center justify-between w-full py-1 border-b border-[#222222]/50"):
+                        ui.label(d.get("spell", "")).classes("font-mono text-[12px] text-rose-400")
+                        did = d.get("id", "")
+                        ui.button(
+                            "Revoke",
+                            on_click=lambda g=did: self._handle_revoke_grant("deny_rule", g),
+                        ).props("flat dense no-caps color=negative text-[11px]")
+            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
+                ui.label("Recent Execution Audit Trail (audit.jsonl)").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+                recent = appr.get("recent_activity", [])
+                if not recent:
+                    ui.label("No recent spell execution activity recorded.").classes("text-[11px] text-[#6e6e6e] italic")
+                for act in recent[:10]:
+                    with ui.row().classes("items-center justify-between w-full text-[11px] py-1 border-b border-[#222222]/30 font-mono"):
+                        ui.label(act.get("spell", "")).classes("text-white")
+                        ui.label(act.get("outcome", "")).classes("text-emerald-400" if act.get("outcome") in ("completed", "allow") else "text-amber-400")
+                        ui.label(act.get("reason_code", "")).classes("text-[#6e6e6e]")
+                        ui.label(act.get("timestamp", "")).classes("text-[#6e6e6e]")
+
+    def _render_mvge_trust_screen(self) -> None:
+        trust = self.mvge_data.get("trust", {})
+        status = trust.get("status", "trusted")
+        badge_color = "positive" if status == "trusted" else "negative" if status == "changed" else "amber-7"
+        with ui.column().classes("w-full gap-4"):
+            ui.label("Workspace Trust & Steering").classes("text-[16px] font-semibold text-[#cccccc]")
+            ui.label("Workspace isolation, extension fingerprinting, and AGENTS.md rule resolution.").classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"):
+                with ui.row().classes("items-center justify-between w-full"):
+                    with ui.column().classes("gap-0.5"):
+                        ui.label(trust.get("workspace", "Current Workspace")).classes("font-mono text-[13px] text-white")
+                        ui.label(f"SHA-256 Fingerprint: {trust.get('fingerprint', 'n/a')}").classes("text-[10px] font-mono text-[#6e6e6e]")
+                    ui.badge(status.upper(), color=badge_color).props("dense text-[11px]")
+                with ui.row().classes("items-center gap-2"):
+                    ui.button(
+                        "Trust Workspace",
+                        on_click=lambda: self._handle_set_workspace_trust(True),
+                    ).props("flat dense no-caps color=primary text-[11px]")
+                    ui.button(
+                        "Revoke Trust",
+                        on_click=lambda: self._handle_set_workspace_trust(False),
+                    ).props("flat dense no-caps color=negative text-[11px]")
+
+    def _render_mvge_compaction_screen(self) -> None:
+        comp = self.mvge_data.get("compaction", {})
+        used = comp.get("current_mana_used", 0)
+        window = comp.get("context_window", 128000)
+        pct = min(1.0, used / window) if window > 0 else 0.0
+        with ui.column().classes("w-full gap-4"):
+            ui.label("Compaction & Mana Pool").classes("text-[16px] font-semibold text-[#cccccc]")
+            ui.label("Automatic Tome compaction and context window memory budgeting.").classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"):
+                with ui.row().classes("items-center justify-between w-full"):
+                    ui.label("Current Mana Pool Usage").classes("text-[13px] font-medium text-[#cccccc]")
+                    ui.label(f"{used:,} / {window:,} Mana ({pct * 100:.1f}%)").classes("font-mono text-[12px] text-cyan-400")
+                ui.linear_progress(value=pct).props("color=cyan").classes("w-full h-2 rounded")
+                with ui.row().classes("items-center justify-between w-full pt-2 border-t border-[#222222]"):
+                    ui.label(f"Reserve Mana: {comp.get('reserve_mana', 16384)}").classes("text-[11px] text-[#6e6e6e]")
+                    ui.label(f"Keep Recent: {comp.get('keep_recent_mana', 8192)}").classes("text-[11px] text-[#6e6e6e]")
+                    ui.label(f"Threshold: {comp.get('threshold', 0.85)}").classes("text-[11px] text-[#6e6e6e]")
+                ui.button(
+                    "Compact Active Tome Now (/compact)",
+                    icon="compress",
+                    on_click=self._handle_compact_now,
+                ).props("flat dense no-caps color=primary text-[12px]")
+
+    def _render_mvge_diagnostics_screen(self) -> None:
+        diag = self.mvge_data.get("diagnostics", {})
+        with ui.column().classes("w-full gap-4"):
+            ui.label("Diagnostics & MCP").classes("text-[16px] font-semibold text-[#cccccc]")
+            ui.label("System dependencies, OpenTelemetry, and runtime environment.").classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
+                ui.label(f"Mvge Agent Engine v{diag.get('mvge_version', '0.3.0')}").classes("text-[14px] font-bold text-white")
+                ui.label(f"Active Mvge: {diag.get('active_mvge', 'coding_mvge')} • Profile: {diag.get('active_profile', 'coding')}").classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
+                ui.label("System Checks").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+                for chk in diag.get("checks", []):
+                    with ui.row().classes("items-center justify-between w-full text-[12px]"):
+                        ui.label(chk.get("name", "")).classes("font-mono text-[#cccccc]")
+                        ui.badge("OK" if chk.get("ok") else "MISSING", color="positive" if chk.get("ok") else "negative").props("dense text-[10px]")
+
+    def _handle_save_realm_key(self, realm: str, key: str) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("save_realm_key", {"realm": realm, "api_key": key})
+
+    def _handle_clear_realm_key(self, realm: str) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("clear_realm_key", {"realm": realm})
+
+    def _handle_install_rune(self, rune_name: str) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("install_rune", {"name": rune_name})
+
+    def _handle_toggle_session_approve_all(self, enabled: bool) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("toggle_session_approve_all", {"enabled": enabled})
+
+    def _handle_revoke_grant(self, kind: str, grant_id: str) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("revoke_grant", {"kind": kind, "grant_id": grant_id})
+
+    def _handle_set_workspace_trust(self, trusted: bool) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("set_workspace_trust", {"trusted": trusted})
+
+    def _handle_compact_now(self) -> None:
+        if self.on_mvge_action:
+            self.on_mvge_action("compact_now", {})

@@ -25,6 +25,7 @@ from .state import (
     McpServerConfig,
     McpToolConfig,
     Message,
+    PersonaConfig,
     ProjectConfig,
     SecurityRule,
     Session,
@@ -39,6 +40,7 @@ from .state import (
     create_default_skills,
     create_default_subagents,
 )
+from .terminal_dock import DockTabType, TerminalDock
 from .theme import (
     ANTIGRAVITY_THEME_CSS,
     apply_antigravity_theme_mode,
@@ -70,6 +72,7 @@ __all__ = [
     "McpToolConfig",
     "MenuEntry",
     "Message",
+    "PersonaConfig",
     "PluginEntry",
     "ProjectConfig",
     "SearchConversationsModal",
@@ -80,6 +83,8 @@ __all__ = [
     "SkillItem",
     "SkillRuleEntry",
     "SubagentItem",
+    "TerminalDock",
+    "DockTabType",
     "ThinkingBlock",
     "TitleBar",
     "ToolCallItem",

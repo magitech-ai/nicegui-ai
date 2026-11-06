@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from nicegui import ui
 
+from .state import PersonaConfig
+
 
 @dataclass
 class MenuEntry:
@@ -29,8 +31,14 @@ class TitleBar(ui.element):
         on_open_search: Callable[[], None] | None = None,
         on_select_aux_tab: Callable[[str], None] | None = None,
         initial_open_menu: str | None = None,
+        persona: PersonaConfig | None = None,
+        on_minimize: Callable[[], None] | None = None,
+        on_maximize: Callable[[], None] | None = None,
+        on_close: Callable[[], None] | None = None,
+        show_window_controls: bool = False,
     ) -> None:
         super().__init__("div")
+        self.persona = persona or PersonaConfig()
         self.on_new_conversation = on_new_conversation
         self.on_toggle_sidebar = on_toggle_sidebar
         self.on_toggle_aux = on_toggle_aux
@@ -40,6 +48,10 @@ class TitleBar(ui.element):
         self.on_open_customizations = on_open_customizations
         self.on_open_search = on_open_search
         self.on_select_aux_tab = on_select_aux_tab
+        self.on_minimize = on_minimize
+        self.on_maximize = on_maximize
+        self.on_close = on_close
+        self.show_window_controls = show_window_controls
         self.open_menu_name: str | None = initial_open_menu
 
         self.props('data-testid="title-menu-bar"')
@@ -48,20 +60,23 @@ class TitleBar(ui.element):
             "bg-background px-2 select-none z-50 border-b border-border/40"
         )
 
+        app_name = self.persona.app_name
         self._menus: dict[str, list[MenuEntry]] = {
-            "Antigravity": [
+            app_name: [
                 MenuEntry(
-                    "About Antigravity", action_key="settings", divider_after=True
+                    f"About {app_name}", action_key="settings", divider_after=True
                 ),
                 MenuEntry("Settings...", "Ctrl+,", "settings"),
-                MenuEntry("Customizations...", action_key="customizations"),
+                MenuEntry(
+                    f"{self.persona.extensions_label}...", action_key="customizations"
+                ),
                 MenuEntry(
                     "Automations...", action_key="automations", divider_after=True
                 ),
                 MenuEntry(
                     "Check for Updates...", action_key="settings", divider_after=True
                 ),
-                MenuEntry("Quit Antigravity", "Ctrl+Q", "quit"),
+                MenuEntry(f"Quit {app_name}", "Ctrl+Q", "quit"),
             ],
             "File": [
                 MenuEntry("New Conversation", "Ctrl+N", "new_conversation"),
@@ -99,6 +114,32 @@ class TitleBar(ui.element):
         with self:
             self._bar_container = ui.row().classes("items-center gap-0.5 pl-1 relative")
             ui.element("div").classes("flex-1 h-full")
+            if self.show_window_controls:
+                with ui.row().classes("items-center gap-0.5 pr-1"):
+                    if self.on_minimize:
+                        (
+                            ui.button(on_click=self.on_minimize)
+                            .props('flat dense no-caps icon="remove"')
+                            .classes(
+                                "text-xs text-muted-foreground hover:text-foreground p-1 min-h-0 min-w-0"
+                            )
+                        )
+                    if self.on_maximize:
+                        (
+                            ui.button(on_click=self.on_maximize)
+                            .props('flat dense no-caps icon="crop_square"')
+                            .classes(
+                                "text-xs text-muted-foreground hover:text-foreground p-1 min-h-0 min-w-0"
+                            )
+                        )
+                    if self.on_close:
+                        (
+                            ui.button(on_click=self.on_close)
+                            .props('flat dense no-caps icon="close"')
+                            .classes(
+                                "text-xs text-muted-foreground hover:text-red-400 p-1 min-h-0 min-w-0"
+                            )
+                        )
 
         self.refresh_bar()
 
@@ -121,6 +162,12 @@ class TitleBar(ui.element):
             self.on_open_customizations()
         elif key == "search" and self.on_open_search:
             self.on_open_search()
+        elif key == "quit" and self.on_close:
+            self.on_close()
+        elif key == "minimize" and self.on_minimize:
+            self.on_minimize()
+        elif key in ("fullscreen", "zoom") and self.on_maximize:
+            self.on_maximize()
         elif key and key.startswith("aux_") and self.on_select_aux_tab:
             self.on_select_aux_tab(key.removeprefix("aux_"))
 

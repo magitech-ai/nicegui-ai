@@ -1,18 +1,19 @@
-"""1:1 Antigravity ChatView (Zero-State Home, Active Conversation Stream, Kebab Menu, Lifted Context Menu, and Composer Controls)."""
-
+import asyncio
+import inspect
 from collections.abc import Callable
-from typing import Literal
+from typing import Any, Literal
 
 from nicegui import ui
 
 from .auxiliary_pane import AuxTabType
 from .icons import AntigravityIcon
-from .model_selector import AntigravityModelSelector
+from .model_selector import AntigravityModelDef, AntigravityModelSelector
 from .state import (
     AppSettings,
     ArtifactItem,
     ContextAttachment,
     Message,
+    PersonaConfig,
     ProjectConfig,
     Session,
 )
@@ -89,8 +90,23 @@ class ChatView(ui.element):
         on_effort_change: Callable[[Literal["Low", "Medium", "High"]], None]
         | None = None,
         on_fork_from_message: Callable[[str], None] | None = None,
+        persona: PersonaConfig | None = None,
+        on_approve_tool: Callable[[str], Any] | None = None,
+        on_veto_tool: Callable[[str], Any] | None = None,
+        on_stop_generation: Callable[[], Any] | None = None,
+        elapsed_time: str | None = None,
+        attachments: list[ContextAttachment] | None = None,
+        on_remove_attachment: Callable[[str], Any] | None = None,
+        autocomplete_service: Any | None = None,
+        models: list[AntigravityModelDef] | None = None,
+        on_select_autocomplete: Callable[[int], Any] | None = None,
     ) -> None:
         super().__init__("main")
+        self.persona = persona or PersonaConfig()
+        self.on_approve_tool = on_approve_tool
+        self.on_veto_tool = on_veto_tool
+        self.on_stop_generation = on_stop_generation
+        self.elapsed_time = elapsed_time
         self.session = session
         self.all_sessions = all_sessions
         self.projects = projects
@@ -99,6 +115,10 @@ class ChatView(ui.element):
         self.selected_effort: Literal["Low", "Medium", "High"] = selected_effort
         self.is_streaming = is_streaming
         self.is_aux_open = is_aux_open
+        self.on_remove_attachment = on_remove_attachment
+        self.autocomplete_service = autocomplete_service
+        self.models = models
+        self.on_select_autocomplete = on_select_autocomplete
 
         # Interactive popover states
         self.model_open = initial_open_model
@@ -116,7 +136,7 @@ class ChatView(ui.element):
 
         # Composer & conversation states
         self.input_text = "/" if initial_open_fastpick else ""
-        self.attachments: list[ContextAttachment] = []
+        self.attachments: list[ContextAttachment] = list(attachments or [])
         self.environment_mode: Literal["Local", "Worktree"] = "Local"
         self.selected_workspace_id = session.project_id or (
             projects[0].id if projects else "proj-ag-studio"
@@ -162,7 +182,7 @@ class ChatView(ui.element):
     def render(self) -> None:
         self.clear()
         with self:
-            if not self.session.messages:
+            if self.session.id == "session-zero-state" and not self.session.messages:
                 self._render_zero_state_home()
             else:
                 self._render_top_header()
@@ -219,6 +239,10 @@ class ChatView(ui.element):
                         AntigravityIcon(
                             "chevron_down", size=12, classes="text-[#6e6e6e]"
                         )
+
+                ui.label(f"What should {self.persona.app_name} work on?").classes(
+                    "text-[13px] text-[#888888] -mt-2"
+                )
 
                 # Composer Card inside Zero-State
                 self._render_composer_box(is_zero_state=True)
@@ -445,6 +469,15 @@ class ChatView(ui.element):
                     else:
                         self._render_agent_message(msg)
 
+                if self.is_streaming:
+                    with ui.row().classes(
+                        "items-center gap-2 text-[12px] text-amber-400 font-medium py-1"
+                    ):
+                        AntigravityIcon(
+                            "sparkle", size=13, classes="animate-spin text-amber-400"
+                        )
+                        ui.label("Channeling response...")
+
                 # Interactive Ask Question Card (on Clone Antigravity UI session)
                 if self.session.id == "session-clone-rea":
                     self._render_ask_question_card()
@@ -529,6 +562,8 @@ class ChatView(ui.element):
                 ):
                     with (
                         ui.button(on_click=lambda m=msg.id: self._toggle_thought(m))
+                        .mark(f"trajectory-toggle-{msg.id}")
+                        .mark("trajectory_toggle")
                         .props(
                             f'flat dense no-caps data-testid="trajectory-toggle-{msg.id}"'
                         )
@@ -606,6 +641,47 @@ class ChatView(ui.element):
                                             "text-[10px] font-mono text-[#6e6e6e]"
                                         )
 
+                                    if tc.status in ("approval_required", "pending"):
+                                        with ui.row().classes(
+                                            "w-full px-3 py-2 bg-[#101010] border-t border-[#222222] items-center justify-between"
+                                        ):
+                                            ui.label(
+                                                f"Approval required to execute {tc.tool_name}"
+                                            ).classes(
+                                                "text-[11px] text-amber-400 font-medium"
+                                            )
+                                            with ui.row().classes("items-center gap-2"):
+                                                (
+                                                    ui.button(
+                                                        "Approve",
+                                                        on_click=lambda tid=tc.id: (
+                                                            self._handle_approve_tool(
+                                                                tid
+                                                            )
+                                                        ),
+                                                    )
+                                                    .props(
+                                                        'flat dense no-caps data-testid="approval-gate-approve"'
+                                                    )
+                                                    .classes(
+                                                        "px-2.5 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-white text-[11px] font-medium rounded"
+                                                    )
+                                                )
+                                                (
+                                                    ui.button(
+                                                        "Veto",
+                                                        on_click=lambda tid=tc.id: (
+                                                            self._handle_veto_tool(tid)
+                                                        ),
+                                                    )
+                                                    .props(
+                                                        'flat dense no-caps data-testid="approval-gate-veto"'
+                                                    )
+                                                    .classes(
+                                                        "px-2.5 py-1 bg-red-600/80 hover:bg-red-600 text-white text-[11px] font-medium rounded"
+                                                    )
+                                                )
+
                                     if tc_open and tc.output:
                                         ui.label(tc.output).classes(
                                             "w-full px-3 py-2 bg-[#101010] border-t border-[#222222] font-mono text-[11px] text-[#cccccc]/80 whitespace-pre-wrap"
@@ -618,6 +694,7 @@ class ChatView(ui.element):
                                                     self._handle_open_artifact(a)
                                                 )
                                             )
+                                            .mark("agent-embed")
                                             .props(
                                                 'flat dense no-caps data-testid="agent-embed"'
                                             )
@@ -639,9 +716,34 @@ class ChatView(ui.element):
                                             )
 
             # Main Agent Markdown Body
-            ui.markdown(msg.content).classes(
-                "text-[13px] text-[#cccccc] leading-relaxed w-full"
-            )
+            if msg.content:
+                ui.markdown(msg.content).classes(
+                    "text-[13px] text-[#cccccc] leading-relaxed w-full"
+                )
+
+            for art in msg.artifacts:
+                with (
+                    ui.button(on_click=lambda a=art: self._handle_open_artifact(a))
+                    .mark("agent-embed")
+                    .props('flat dense no-caps data-testid="agent-embed"')
+                    .classes(
+                        "w-full px-3 py-2 bg-[#181818] hover:bg-[#252525] border border-[#2b2b2b] rounded flex items-center justify-between font-normal mt-2"
+                    )
+                ):
+                    with ui.row().classes("items-center gap-2"):
+                        AntigravityIcon(
+                            "file_doc",
+                            size=14,
+                            classes="text-blue-400",
+                        )
+                        ui.label(art.title).classes(
+                            "text-[12px] font-medium text-[#cccccc]"
+                        )
+                        if art.description:
+                            ui.label(art.description).classes(
+                                "text-[11px] text-[#888888]"
+                            )
+                    ui.label("Open Artifact ▸").classes("text-[11px] text-blue-400")
 
     def _toggle_thought(self, msg_id: str) -> None:
         self.expanded_thoughts[msg_id] = not self.expanded_thoughts.get(msg_id, False)
@@ -652,6 +754,14 @@ class ChatView(ui.element):
             tool_id, False
         )
         self.render()
+
+    def _handle_approve_tool(self, tool_id: str) -> None:
+        if self.on_approve_tool:
+            self.on_approve_tool(tool_id)
+
+    def _handle_veto_tool(self, tool_id: str) -> None:
+        if self.on_veto_tool:
+            self.on_veto_tool(tool_id)
 
     def _handle_open_artifact(self, artifact: ArtifactItem) -> None:
         if self.on_open_artifact:
@@ -820,24 +930,93 @@ class ChatView(ui.element):
                                 "text-[#6e6e6e] hover:text-[#cccccc] min-h-0 min-w-0 p-0 text-[11px]"
                             )
 
+            # Autocomplete popup
+            if self.autocomplete_service:
+
+                @ui.refreshable
+                def autocomplete_popup_view() -> None:
+                    ac = self.autocomplete_service
+                    if not ac or not getattr(ac, "is_open", False):
+                        return
+                    items = (
+                        ac.get_visible_items()
+                        if hasattr(ac, "get_visible_items")
+                        else getattr(ac, "items", [])
+                    )
+                    if not items:
+                        return
+                    selected_idx = getattr(ac, "selected_index", 0)
+                    with (
+                        ui.element("div")
+                        .props('data-testid="autocomplete-popup"')
+                        .classes(
+                            "absolute z-50 w-full bg-[#191919] border border-[#272727] rounded-xl shadow-2xl "
+                            "max-h-48 overflow-y-auto bottom-full mb-2 p-1.5 flex flex-col gap-0.5"
+                        )
+                    ):
+                        for idx, item in enumerate(items):
+                            is_selected = idx == selected_idx
+                            lbl = (
+                                str(ac.get_item_label(item))
+                                if hasattr(ac, "get_item_label")
+                                else getattr(item, "label", str(item))
+                            )
+                            with (
+                                ui.row()
+                                .props(
+                                    f'data-testid="autocomplete-item" data-index="{idx}"'
+                                )
+                                .classes(
+                                    "items-center justify-between px-2.5 py-1.5 cursor-pointer rounded-lg text-xs "
+                                    + (
+                                        "bg-[#272727] text-[#cccccc] font-medium"
+                                        if is_selected
+                                        else "hover:bg-[#272727] text-[#888888] hover:text-[#cccccc]"
+                                    )
+                                )
+                                .on("click", lambda _, i=idx: self._handle_select_ac(i))
+                            ):
+                                ui.label(lbl).classes("truncate")
+                                if hasattr(ac, "get_item_description"):
+                                    desc = ac.get_item_description(item)
+                                    if desc:
+                                        ui.label(str(desc)).classes(
+                                            "text-[10px] font-mono text-[#6e6e6e] truncate"
+                                        )
+
+                autocomplete_popup_view()
+                if hasattr(self.autocomplete_service, "subscribe_items_changed"):
+                    self.autocomplete_service.subscribe_items_changed(
+                        autocomplete_popup_view.refresh
+                    )
+                if hasattr(self.autocomplete_service, "subscribe"):
+                    self.autocomplete_service.subscribe(autocomplete_popup_view.refresh)
+
             # Prompt Textarea
             prompt_input = (
                 ui.textarea(
-                    placeholder="Ask Antigravity anything, @ to mention files/skills, / for workflows...",
+                    placeholder=f"Ask {self.persona.app_name} anything, @ to mention files/skills, / for workflows...",
                     value=self.input_text,
                     on_change=lambda e: self._on_prompt_change(str(e.value)),
                 )
                 .props('borderless dense autogrow dark data-testid="composer-input"')
                 .classes("w-full text-[13px] text-[#cccccc] leading-relaxed")
+                .mark("prompt_input")
             )
-            _ = prompt_input
+            self.prompt_textarea = prompt_input
+            prompt_input.on("keydown.exact.enter.prevent", self._handle_enter_press)
+            if self.autocomplete_service:
+                prompt_input.on("keydown.down.prevent", self._handle_arrow_down)
+                prompt_input.on("keydown.up.prevent", self._handle_arrow_up)
 
             # Footer Toolbar (MBb)
             with ui.row().classes(
-                "w-full items-center justify-between gap-2 pt-1 relative"
+                "w-full items-end justify-between gap-2 pt-1 relative flex-nowrap"
             ):
                 # Left Controls: + Context Picker, Modes, Side Question, Permissions, Model Selector
-                with ui.row().classes("items-center gap-1.5 flex-wrap relative"):
+                with ui.row().classes(
+                    "items-center gap-1.5 flex-wrap flex-1 min-w-0 relative"
+                ):
                     # '+' Add Context Button & Popover (vBb)
                     with ui.element("div").classes("relative"):
                         ctx_btn = (
@@ -1003,22 +1182,130 @@ class ChatView(ui.element):
                             else None
                         ),
                         initial_open=self.model_open,
+                        models=self.models,
                     )
 
-                # Right Controls: Send Prompt Button
-                send_btn = (
-                    ui.button(on_click=self._handle_send)
-                    .props('flat dense no-caps data-testid="composer-send-button"')
-                    .classes(
-                        "p-2 rounded-full bg-[#cccccc] hover:bg-white text-[#101010] transition-colors min-h-0 min-w-0"
-                    )
+                # Right Controls: Send Prompt / Stop Button
+                if self.is_streaming:
+                    with ui.row().classes(
+                        "items-center gap-2 shrink-0 self-end ml-auto"
+                    ):
+                        if self.elapsed_time:
+                            ui.label(self.elapsed_time).mark(
+                                "channeling_elapsed"
+                            ).classes("text-[11px] font-mono text-[#888888]")
+                        stop_btn = (
+                            ui.button(on_click=self._handle_stop)
+                            .mark("stop_channeling_btn")
+                            .props(
+                                'flat dense no-caps data-testid="composer-stop-button"'
+                            )
+                            .classes(
+                                "p-2 rounded-full bg-rose-600 hover:bg-rose-500 text-white transition-colors min-h-0 min-w-0"
+                            )
+                        )
+                        with stop_btn:
+                            AntigravityIcon("square", size=14)
+                else:
+                    with ui.row().classes(
+                        "items-center gap-2 shrink-0 self-end ml-auto"
+                    ):
+                        with (
+                            ui.row()
+                            .classes(
+                                "items-center gap-1.5 text-[11px] text-[#6e6e6e] mr-1 flex select-none"
+                            )
+                            .props('data-testid="composer-keyboard-hints"')
+                        ):
+                            with ui.row().classes("items-center gap-0.5"):
+                                ui.element("kbd").classes(
+                                    "px-1 py-0.5 text-[10px] font-mono bg-[#151515] border border-[#272727] rounded text-[#888888]"
+                                )._text = "↵"
+                                ui.label("send").classes("text-[10px]")
+                            with ui.row().classes("items-center gap-0.5"):
+                                ui.element("kbd").classes(
+                                    "px-1 py-0.5 text-[10px] font-mono bg-[#151515] border border-[#272727] rounded text-[#888888]"
+                                )._text = "⇧↵"
+                                ui.label("newline").classes("text-[10px]")
+                        send_btn = (
+                            ui.button(on_click=self._handle_send)
+                            .props(
+                                'flat dense no-caps data-testid="composer-send-button"'
+                            )
+                            .classes(
+                                "p-2 rounded-full bg-[#cccccc] hover:bg-white text-[#101010] transition-colors min-h-0 min-w-0"
+                            )
+                        )
+                        with send_btn:
+                            AntigravityIcon("send_arrow", size=14)
+
+    def _handle_enter_press(self) -> None:
+        if (
+            self.autocomplete_service
+            and getattr(self.autocomplete_service, "is_open", False)
+            and hasattr(self.autocomplete_service, "confirm_selection")
+        ):
+            self.autocomplete_service.confirm_selection()
+            return
+        self._handle_send()
+
+    def _handle_stop(self) -> None:
+        if self.on_stop_generation:
+            res = self.on_stop_generation()
+            if inspect.iscoroutine(res):
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = None
+                if loop is not None:
+                    loop.create_task(res)
+        self.is_streaming = False
+        self.render()
+
+    def _handle_arrow_down(self, e: Any = None) -> None:
+        if (
+            self.autocomplete_service
+            and getattr(self.autocomplete_service, "is_open", False)
+            and hasattr(self.autocomplete_service, "move_down")
+        ):
+            self.autocomplete_service.move_down()
+
+    def _handle_arrow_up(self, e: Any = None) -> None:
+        if (
+            self.autocomplete_service
+            and getattr(self.autocomplete_service, "is_open", False)
+            and hasattr(self.autocomplete_service, "move_up")
+        ):
+            self.autocomplete_service.move_up()
+
+    def _handle_select_ac(self, idx: int) -> None:
+        if self.on_select_autocomplete:
+            self.on_select_autocomplete(idx)
+        elif self.autocomplete_service:
+            if hasattr(self.autocomplete_service, "selected_index"):
+                self.autocomplete_service.selected_index = idx
+            item = (
+                self.autocomplete_service.get_selected_item()
+                if hasattr(self.autocomplete_service, "get_selected_item")
+                else None
+            )
+            if item:
+                ins = (
+                    self.autocomplete_service.get_insertion_text(item)
+                    if hasattr(self.autocomplete_service, "get_insertion_text")
+                    else str(item)
                 )
-                with send_btn:
-                    AntigravityIcon("send_arrow", size=14)
+                self.input_text = ins or ""
+                self.autocomplete_service.close()
+                self.render()
 
     def _on_prompt_change(self, val: str) -> None:
         self.input_text = val
-        if val.startswith("/") and not self.fastpick_open:
+        if self.autocomplete_service and hasattr(
+            self.autocomplete_service, "process_input"
+        ):
+            self.autocomplete_service.process_input(val, len(val))
+        elif val.startswith("/") and not self.fastpick_open:
             self.fastpick_open = True
             self.render()
         elif not val.startswith("/") and self.fastpick_open:
@@ -1044,6 +1331,8 @@ class ChatView(ui.element):
 
     def _remove_attachment(self, att_id: str) -> None:
         self.attachments = [a for a in self.attachments if a.id != att_id]
+        if self.on_remove_attachment:
+            self.on_remove_attachment(att_id)
         self.render()
 
     def _toggle_environment_mode(self) -> None:

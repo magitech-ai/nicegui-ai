@@ -6,9 +6,9 @@ from typing import Literal
 from nicegui import ui
 
 from nicegui_ai.antigravity.icons import AntigravityIcon
-from nicegui_ai.antigravity.state import ProjectConfig, Session
+from nicegui_ai.antigravity.state import PersonaConfig, ProjectConfig, Session
 
-CenterViewType = Literal["chat", "history", "automations", "customizations"]
+CenterViewType = Literal["chat", "history", "automations", "customizations"] | str
 
 
 class Sidebar(ui.element):
@@ -36,8 +36,10 @@ class Sidebar(ui.element):
         on_navigate_forward: Callable[[], None] | None = None,
         can_navigate_back: bool = True,
         can_navigate_forward: bool = False,
+        persona: PersonaConfig | None = None,
     ) -> None:
         super().__init__("div")
+        self.persona = persona or PersonaConfig()
         self.active_session_id = active_session_id
         self.active_center_view: CenterViewType = active_center_view
         self.sessions = sessions
@@ -108,7 +110,7 @@ class Sidebar(ui.element):
         standalone_sessions = [
             s
             for s in visible_sessions
-            if not s.project_id and not s.pinned and len(s.messages) > 0
+            if not s.project_id and not s.pinned and s.id != "session-zero-state"
         ]
 
         with self:
@@ -126,6 +128,7 @@ class Sidebar(ui.element):
                         "shrink-0 pl-1 pr-1.5 mr-0.5 flex items-center text-foreground hover:text-white "
                         "cursor-pointer transition-colors bg-transparent border-none"
                     )
+                    .mark("new_conversation_btn")
                     .on("click", lambda: self.on_new_conversation(None))
                 ):
                     AntigravityIcon("antigravity_logo", size=22)
@@ -214,21 +217,44 @@ class Sidebar(ui.element):
                         "cursor-pointer w-full justify-between h-8 gap-1.5 px-2 py-1 rounded-lg "
                         "bg-sidebar-muted hover:bg-sidebar-secondary border border-border text-foreground text-sm shadow-sm"
                     )
+                    .mark("new_conversation_btn")
                     .on("click", lambda: self.on_new_conversation(None))
                 ):
                     with ui.element("div").classes("flex items-center gap-1.5 min-w-0"):
                         AntigravityIcon("plus", size=16)
-                        ui.label("New Conversation").classes("truncate")
+                        ui.label(f"New {self.persona.session_label}").classes(
+                            "truncate"
+                        )
                     ui.label("Ctrl+N").classes(
                         "text-[10px] text-muted-foreground font-mono bg-secondary px-1 rounded border border-border"
                     )
+
+                active_s = next(
+                    (
+                        s
+                        for s in self.sessions
+                        if s.id == self.active_session_id
+                        and s.id != "session-zero-state"
+                    ),
+                    None,
+                )
+                if active_s:
+                    with ui.element("div").classes(
+                        "my-1.5 p-2 rounded-lg bg-sidebar-muted/40 border border-border/40"
+                    ):
+                        ui.label("Current Session").classes(
+                            "text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                        )
+                        ui.label(active_s.title).classes(
+                            "text-xs font-medium text-foreground truncate mt-0.5"
+                        )
 
                 with ui.element("div").classes("pt-1 space-y-0.5 flex flex-col"):
                     nav_items: list[
                         tuple[str, str, str, CenterViewType, Callable[[], None]]
                     ] = [
                         (
-                            "Conversation History",
+                            f"{self.persona.sessions_label} History",
                             "history",
                             "history-button",
                             "history",
@@ -242,7 +268,7 @@ class Sidebar(ui.element):
                             self.on_open_automations,
                         ),
                         (
-                            "Customizations",
+                            self.persona.extensions_label,
                             "customizations",
                             "customizations-button",
                             "customizations",
@@ -275,7 +301,7 @@ class Sidebar(ui.element):
             ):
                 # Pinned Conversations
                 with ui.element("div"):
-                    ui.label("Pinned Conversations").classes(
+                    ui.label(f"Pinned {self.persona.sessions_label}").classes(
                         "text-xs font-semibold text-muted-foreground px-2 py-1 tracking-wider"
                     )
                     with ui.element("div").classes("flex flex-col gap-0.5 mt-1"):
@@ -401,7 +427,7 @@ class Sidebar(ui.element):
                                 for s in visible_sessions
                                 if s.project_id == p.id
                                 and not s.pinned
-                                and len(s.messages) > 0
+                                and s.id != "session-zero-state"
                             ]
                             if self.only_non_empty_projects and not proj_sessions:
                                 continue
@@ -464,16 +490,26 @@ class Sidebar(ui.element):
                                                 ui.label(item.title).classes(
                                                     "truncate pr-2"
                                                 )
-                                                ui.label(item.timestamp).classes(
-                                                    "text-[11px] text-muted-foreground shrink-0"
-                                                )
+                                                with ui.row().classes(
+                                                    "items-center gap-1 shrink-0"
+                                                ):
+                                                    branch = getattr(
+                                                        item, "git_branch", None
+                                                    )
+                                                    if branch:
+                                                        ui.label(branch).classes(
+                                                            "text-[10px] text-muted-foreground font-mono"
+                                                        )
+                                                    ui.label(item.timestamp).classes(
+                                                        "text-[11px] text-muted-foreground shrink-0"
+                                                    )
 
                 # Standalone Conversations Section
                 with ui.element("div"):
                     with ui.element("div").classes(
                         "flex items-center justify-between px-2 py-1"
                     ):
-                        ui.label("Conversations").classes(
+                        ui.label(self.persona.sessions_label).classes(
                             "text-xs font-semibold text-muted-foreground tracking-wider"
                         )
                         with (
@@ -486,6 +522,7 @@ class Sidebar(ui.element):
                                 "text-secondary-foreground hover:text-foreground hover:bg-secondary "
                                 "bg-transparent border-none cursor-pointer"
                             )
+                            .mark("new_conversation_btn")
                             .on("click", lambda: self.on_new_conversation(None))
                         ):
                             AntigravityIcon("plus", size=16)
@@ -513,9 +550,15 @@ class Sidebar(ui.element):
                                 )
                             ):
                                 ui.label(c.title).classes("truncate pr-2")
-                                ui.label(c.timestamp).classes(
-                                    "text-[11px] text-muted-foreground shrink-0"
-                                )
+                                with ui.row().classes("items-center gap-1 shrink-0"):
+                                    c_branch = getattr(c, "git_branch", None)
+                                    if c_branch:
+                                        ui.label(c_branch).classes(
+                                            "text-[10px] text-muted-foreground font-mono"
+                                        )
+                                    ui.label(c.timestamp).classes(
+                                        "text-[11px] text-muted-foreground shrink-0"
+                                    )
 
             # Bottom Settings Button
             with ui.element("div").classes(

@@ -5,6 +5,22 @@ from typing import Literal
 
 
 @dataclass
+class PersonaConfig:
+    """Configurable persona terminology for Antigravity-styled UI presentation."""
+
+    app_name: str = "Antigravity"
+    session_label: str = "Conversation"
+    sessions_label: str = "Conversations"
+    tool_label: str = "Tool"
+    tools_label: str = "Tools"
+    token_label: str = "Tokens"
+    agent_label: str = "Agent"
+    extension_label: str = "Extension"
+    extensions_label: str = "Extensions"
+    logo_icon: str = "antigravity_logo"
+
+
+@dataclass
 class ArtifactItem:
     id: str
     title: str
@@ -20,7 +36,9 @@ class ToolCallItem:
     action: str
     parameters: dict[str, object]
     output: str
-    status: Literal["running", "completed", "error"] = "completed"
+    status: Literal[
+        "running", "completed", "error", "approval_required", "pending", "vetoed"
+    ] = "completed"
     artifacts: list[ArtifactItem] = field(default_factory=list)
 
 
@@ -49,6 +67,7 @@ class Message:
     thinking: ThinkingBlock | None = None
     tool_calls: list[ToolCallItem] = field(default_factory=list)
     attachments: list[ContextAttachment] = field(default_factory=list)
+    artifacts: list[ArtifactItem] = field(default_factory=list)
 
 
 @dataclass
@@ -61,6 +80,7 @@ class Session:
     project_id: str | None = None
     pinned: bool = False
     archived: bool = False
+    git_branch: str | None = None
 
 
 @dataclass
@@ -150,10 +170,17 @@ class ProjectConfig:
     sandbox_enabled: bool = True
     sandbox_allow_network: bool = False
     auto_execution_policy: Literal["off", "sandbox", "always"] = "sandbox"
+    contemplation_level: str = "high"
+    spells_enabled: list[str] = field(default_factory=list)
 
 
 @dataclass
 class AppSettings:
+    api_key: str = ""
+    default_model: str = "openrouter/auto"
+    mana_limit: int = 128000
+    temperature: float = 0.7
+    contemplation_level: str = "high"
     queued_message_strategy: Literal["send", "queue"] = "queue"
     security_preset: Literal["strict", "default", "auto", "turbo", "custom"] = "default"
     artifact_review_mode: Literal["always", "review", "auto"] = "review"
