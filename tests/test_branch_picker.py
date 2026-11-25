@@ -29,7 +29,9 @@ def test_branch_picker_set_branch():
 
 def test_branch_picker_previous_wrap():
     changes = []
-    picker = BranchPicker(current_index=1, total_branches=3, on_change=lambda idx: changes.append(idx))
+    picker = BranchPicker(
+        current_index=1, total_branches=3, on_change=lambda idx: changes.append(idx)
+    )
     picker.previous()
     assert picker.current_index == 3  # wraps to total
     assert changes == [3]
@@ -37,7 +39,9 @@ def test_branch_picker_previous_wrap():
 
 def test_branch_picker_previous_decrement():
     changes = []
-    picker = BranchPicker(current_index=2, total_branches=3, on_change=lambda idx: changes.append(idx))
+    picker = BranchPicker(
+        current_index=2, total_branches=3, on_change=lambda idx: changes.append(idx)
+    )
     picker.previous()
     assert picker.current_index == 1
     assert changes == [1]
@@ -45,7 +49,9 @@ def test_branch_picker_previous_decrement():
 
 def test_branch_picker_next_wrap():
     changes = []
-    picker = BranchPicker(current_index=3, total_branches=3, on_change=lambda idx: changes.append(idx))
+    picker = BranchPicker(
+        current_index=3, total_branches=3, on_change=lambda idx: changes.append(idx)
+    )
     picker.next()
     assert picker.current_index == 1  # wraps to 1
     assert changes == [1]
@@ -53,7 +59,9 @@ def test_branch_picker_next_wrap():
 
 def test_branch_picker_next_increment():
     changes = []
-    picker = BranchPicker(current_index=1, total_branches=3, on_change=lambda idx: changes.append(idx))
+    picker = BranchPicker(
+        current_index=1, total_branches=3, on_change=lambda idx: changes.append(idx)
+    )
     picker.next()
     assert picker.current_index == 2
     assert changes == [2]

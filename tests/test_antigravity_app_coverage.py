@@ -7,35 +7,21 @@ automations, terminal dock, aux actions, fork, parse_request_query,
 register_antigravity_routes, and main.
 """
 
-import asyncio
-from collections.abc import Coroutine
 from unittest.mock import MagicMock, patch
 
 from starlette.requests import Request
 
 from nicegui_ai.antigravity.app import (
     AntigravityApp,
-    main,
     parse_request_query,
     register_antigravity_routes,
 )
 from nicegui_ai.antigravity.state import (
-    AppSettings,
     ArtifactItem,
     AutomationItem,
-    ContextAttachment,
-    Message,
     PersonaConfig,
-    ProjectConfig,
-    Session,
-    ThinkingBlock,
-    ToolCallItem,
     create_default_artifact,
-    create_default_automations,
-    create_default_sessions,
     create_default_settings,
-    create_default_skills,
-    create_default_subagents,
 )
 
 
@@ -160,6 +146,7 @@ def test_handle_send_message_calls_external_callback():
 
 def test_handle_send_message_external_async():
     """_handle_send_message: external callback returning coroutine."""
+
     async def cb(text, atts):
         return (text, atts)
 
@@ -207,6 +194,7 @@ def test_handle_select_project_and_callback_sync():
 
 def test_handle_select_project_async_callback():
     """_handle_select_project: coroutine callback is scheduled, not awaited."""
+
     async def cb(p):
         return p
 
@@ -234,6 +222,7 @@ def test_handle_delete_session_protects_zero_state():
 
 def test_handle_delete_session_async_callback():
     """_handle_delete_session: coroutine callback is scheduled."""
+
     async def cb(s):
         return s
 
@@ -268,6 +257,7 @@ def test_handle_open_settings_none_screen_keeps_screen():
 
 def test_handle_open_settings_async_callback():
     """_handle_open_settings: coroutine callback scheduled, loop=None branch."""
+
     async def cb(screen):
         return screen
 
@@ -357,6 +347,7 @@ def test_handle_open_artifact_and_async():
 
 def test_handle_open_artifact_async_callback():
     """_handle_open_artifact: coroutine callback scheduled."""
+
     async def cb(a):
         return a
 
@@ -444,9 +435,9 @@ def test_handle_nav_back_and_forward():
 def test_handle_nav_push_truncates_forward_history():
     """_push_nav: truncates history after nav_index before appending."""
     app = _app()
-    app._handle_open_history()          # index 1
-    app._handle_nav_back()              # index 0
-    app._handle_open_automations()      # truncates, index 1 again
+    app._handle_open_history()  # index 1
+    app._handle_nav_back()  # index 0
+    app._handle_open_automations()  # truncates, index 1 again
     assert app.nav_index == 1
     assert app.nav_history[-1] == ("automations", app.active_session_id)
 
@@ -700,7 +691,7 @@ def test_render_centers_history_automations_customizations_and_chat():
 def test_render_custom_center_view_renderer_branch():
     """render: custom_center_view_renderer returns True -> pass branch."""
     called = []
-    app = _app(
+    _app(
         custom_center_view_renderer=lambda view: called.append(view) or True,
         query_params={"view": "chat"},
     )
@@ -710,6 +701,7 @@ def test_render_custom_center_view_renderer_branch():
 
 def test_async_callback_helpers_no_running_loop():
     """Handler async branches: asyncio.get_running_loop raises RuntimeError -> new loop path."""
+
     # _handle_send_message external async with no running loop
     async def cb(text, atts):
         return (text, atts)

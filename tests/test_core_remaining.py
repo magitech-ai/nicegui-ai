@@ -1,11 +1,11 @@
 """Tests for remaining uncovered core modules."""
 
 from nicegui_ai.composer import AiComposer
+from nicegui_ai.reasoning import ReasoningCard
+from nicegui_ai.task_tray import TaskTray
 from nicegui_ai.thread import AiThread
 from nicegui_ai.tool_call import ToolCall, ToolCallCard, ToolStatus
-from nicegui_ai.task_tray import TaskTray
 from nicegui_ai.voice_pill import VoicePill
-from nicegui_ai.reasoning import ReasoningCard
 
 
 def test_thread_lines_95_96():

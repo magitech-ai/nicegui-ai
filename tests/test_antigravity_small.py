@@ -1,11 +1,14 @@
 """Tests for antigravity terminal_dock, title_bar, model_selector, icons, sidebar."""
 
+from nicegui_ai.antigravity.icons import AntigravityIcon, get_antigravity_svg
+from nicegui_ai.antigravity.model_selector import AntigravityModelSelector
+from nicegui_ai.antigravity.sidebar import Sidebar
+from nicegui_ai.antigravity.state import (
+    create_default_sessions,
+    create_default_settings,
+)
 from nicegui_ai.antigravity.terminal_dock import TerminalDock
 from nicegui_ai.antigravity.title_bar import TitleBar
-from nicegui_ai.antigravity.model_selector import AntigravityModelSelector
-from nicegui_ai.antigravity.icons import get_antigravity_svg, AntigravityIcon
-from nicegui_ai.antigravity.sidebar import Sidebar
-from nicegui_ai.antigravity.state import create_default_settings, create_default_sessions
 
 
 def test_terminal_dock_init():
@@ -23,8 +26,6 @@ def test_title_bar_init():
 
 
 def test_model_selector_init():
-    settings = create_default_settings()
-    sessions = create_default_sessions()
     chosen = []
     sel = AntigravityModelSelector(
         selected_model="Gemini 3.8 Flash High",

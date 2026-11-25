@@ -1,22 +1,23 @@
 """Comprehensive tests for ALL remaining uncovered modules - push to 100% coverage."""
 
 import asyncio
-from nicegui_ai.stream import StreamBridge
+
 from nicegui_ai.adapters.base import BaseStreamAdapter
-from nicegui_ai.schema import AgUiEvent, AgUiEventType, ToolCall, ToolStatus
-from nicegui_ai.composer import AiComposer
-from nicegui_ai.thread import AiThread
-from nicegui_ai.tool_call import ToolCallCard
-from nicegui_ai.task_tray import TaskTray
-from nicegui_ai.voice_pill import VoicePill
-from nicegui_ai.reasoning import ReasoningCard
 from nicegui_ai.approval_modal import ApprovalModal
 from nicegui_ai.artifact import ArtifactCard
 from nicegui_ai.artifact_viewer import ArtifactViewerDrawer
 from nicegui_ai.code_block import CodeBlock
+from nicegui_ai.composer import AiComposer
 from nicegui_ai.markdown import parse_markdown_blocks
-from nicegui_ai.message import UserMessage, AgentMessage
+from nicegui_ai.message import AgentMessage, UserMessage
 from nicegui_ai.queued_messages import QueuedMessagesTray
+from nicegui_ai.reasoning import ReasoningCard
+from nicegui_ai.schema import AgUiEvent, AgUiEventType, ToolCall, ToolStatus
+from nicegui_ai.stream import StreamBridge
+from nicegui_ai.task_tray import TaskTray
+from nicegui_ai.thread import AiThread
+from nicegui_ai.tool_call import ToolCallCard
+from nicegui_ai.voice_pill import VoicePill
 
 
 class EmptyAdapter(BaseStreamAdapter):
@@ -27,6 +28,7 @@ class EmptyAdapter(BaseStreamAdapter):
 
 # === StreamBridge ===
 
+
 def test_stream_bridge_all_event_types():
     sb = StreamBridge()
     # RUN_STARTED
@@ -34,47 +36,124 @@ def test_stream_bridge_all_event_types():
     # RUN_FINISHED
     sb._dispatch_event(AgUiEvent(type=AgUiEventType.RUN_FINISHED, metadata={}))
     # RUN_ERROR
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.RUN_ERROR, code="c", error="e", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.RUN_ERROR, code="c", error="e", metadata={})
+    )
     # TEXT_MESSAGE_CONTENT
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TEXT_MESSAGE_CONTENT, content="hi", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.TEXT_MESSAGE_CONTENT, content="hi", metadata={})
+    )
     # TEXT_MESSAGE_CHUNK
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TEXT_MESSAGE_CHUNK, content="chunk", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.TEXT_MESSAGE_CHUNK, content="chunk", metadata={})
+    )
     # REASONING_START
     sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_START, metadata={}))
     # REASONING_MESSAGE_START
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_START, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_START, metadata={})
+    )
     # REASONING_MESSAGE_CONTENT
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_CONTENT, content="think", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.REASONING_MESSAGE_CONTENT, content="think", metadata={}
+        )
+    )
     # REASONING_MESSAGE_CHUNK
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_CHUNK, content="chunk", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.REASONING_MESSAGE_CHUNK, content="chunk", metadata={}
+        )
+    )
     # REASONING_END
     sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_END, metadata={}))
     # REASONING_MESSAGE_END
     sb._dispatch_event(AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_END, metadata={}))
     # TOOL_CALL_START
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TOOL_CALL_START, tool_call_id="t1", tool_name="tool", args={}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.TOOL_CALL_START,
+            tool_call_id="t1",
+            tool_name="tool",
+            args={},
+            metadata={},
+        )
+    )
     # TOOL_CALL_ARGS
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TOOL_CALL_ARGS, tool_call_id="t1", args={"k": "v"}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.TOOL_CALL_ARGS,
+            tool_call_id="t1",
+            args={"k": "v"},
+            metadata={},
+        )
+    )
     # TOOL_CALL_END
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TOOL_CALL_END, tool_call_id="t1", metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.TOOL_CALL_END, tool_call_id="t1", metadata={})
+    )
     # TOOL_CALL_RESULT success
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TOOL_CALL_RESULT, tool_call_id="t1", result="ok", is_error=False, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.TOOL_CALL_RESULT,
+            tool_call_id="t1",
+            result="ok",
+            is_error=False,
+            metadata={},
+        )
+    )
     # TOOL_CALL_RESULT error
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.TOOL_CALL_RESULT, tool_call_id="t1", result=None, is_error=True, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.TOOL_CALL_RESULT,
+            tool_call_id="t1",
+            result=None,
+            is_error=True,
+            metadata={},
+        )
+    )
     # ACTIVITY_SNAPSHOT done
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.ACTIVITY_SNAPSHOT, activity_id="a1", snapshot={"status": "done", "text": "x"}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.ACTIVITY_SNAPSHOT,
+            activity_id="a1",
+            snapshot={"status": "done", "text": "x"},
+            metadata={},
+        )
+    )
     # ACTIVITY_DELTA running new
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.ACTIVITY_DELTA, activity_id="a2", delta={"status": "running", "text": "y"}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.ACTIVITY_DELTA,
+            activity_id="a2",
+            delta={"status": "running", "text": "y"},
+            metadata={},
+        )
+    )
     # ACTIVITY_DELTA existing update
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.ACTIVITY_DELTA, activity_id="a2", delta={"status": "running", "text": "z"}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.ACTIVITY_DELTA,
+            activity_id="a2",
+            delta={"status": "running", "text": "z"},
+            metadata={},
+        )
+    )
     # STATE_DELTA with usage
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.STATE_DELTA, delta={"usage": {"total_tokens": 50}}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(
+            type=AgUiEventType.STATE_DELTA,
+            delta={"usage": {"total_tokens": 50}},
+            metadata={},
+        )
+    )
     # STATE_DELTA without usage
-    sb._dispatch_event(AgUiEvent(type=AgUiEventType.STATE_DELTA, delta={"other": "val"}, metadata={}))
+    sb._dispatch_event(
+        AgUiEvent(type=AgUiEventType.STATE_DELTA, delta={"other": "val"}, metadata={})
+    )
 
 
 def test_stream_bridge_consume_with_message_thread():
-    import asyncio
     sb = StreamBridge()
     msg = AgentMessage(agent_name="A", text="")
     th = AiThread()
@@ -87,10 +166,13 @@ def test_stream_bridge_consume_with_message_thread():
 
 # === Composer ===
 
+
 def test_composer_all_paths():
     sent = []
     cancelled = []
-    composer = AiComposer(on_send=lambda t: sent.append(t), on_cancel=lambda: cancelled.append(True))
+    composer = AiComposer(
+        on_send=lambda t: sent.append(t), on_cancel=lambda: cancelled.append(True)
+    )
     assert not composer.is_running
 
     # Empty input - disabled
@@ -119,6 +201,7 @@ def test_composer_all_paths():
 
 # === Thread ===
 
+
 def test_thread_add_agent_and_tool_messages():
     thread = AiThread()
     am = thread.add_agent_message(agent_name="Agent", text="hi")
@@ -136,6 +219,7 @@ def test_thread_add_agent_and_tool_messages():
 
 # === ToolCall ===
 
+
 def test_tool_call_card_all():
     tc = ToolCall(id="t-1", name="search", status=ToolStatus.EXECUTING)
     card = ToolCallCard(tc)
@@ -148,6 +232,7 @@ def test_tool_call_card_all():
 
 # === VoicePill ===
 
+
 def test_voice_pill_processing():
     pill = VoicePill(state="processing")
     assert pill.state == "processing"
@@ -155,6 +240,7 @@ def test_voice_pill_processing():
 
 
 # === TaskTray ===
+
 
 def test_task_tray_all():
     tray = TaskTray()
@@ -172,6 +258,7 @@ def test_task_tray_all():
 
 # === ReasoningCard ===
 
+
 def test_reasoning_card_all():
     card = ReasoningCard()
     assert card.step_count == 1
@@ -182,6 +269,7 @@ def test_reasoning_card_all():
 
 
 # === ApprovalModal ===
+
 
 def test_approval_modal_all():
     tool = ToolCall(id="t-1", name="rm", status=ToolStatus.APPROVAL_REQUIRED)
@@ -195,8 +283,11 @@ def test_approval_modal_all():
 
 # === ArtifactCard ===
 
+
 def test_artifact_card_all():
-    card = ArtifactCard(title="T", artifact_type="file", content="c", language="py", size_bytes=10)
+    card = ArtifactCard(
+        title="T", artifact_type="file", content="c", language="py", size_bytes=10
+    )
     card.toggle()
     assert card.is_open
     card.open()
@@ -206,6 +297,7 @@ def test_artifact_card_all():
 
 
 # === ArtifactViewerDrawer ===
+
 
 def test_artifact_viewer_all():
     viewer = ArtifactViewerDrawer(title="V")
@@ -221,6 +313,7 @@ def test_artifact_viewer_all():
 
 # === CodeBlock ===
 
+
 def test_code_block_all():
     cb = CodeBlock(code="x=1")
     assert cb.language == "text"
@@ -228,6 +321,7 @@ def test_code_block_all():
 
 
 # === Markdown ===
+
 
 def test_markdown_all():
     # Empty
@@ -242,6 +336,7 @@ def test_markdown_all():
 
 
 # === QueuedMessagesTray ===
+
 
 def test_queued_messages_tray_all():
     tray = QueuedMessagesTray(
@@ -263,6 +358,7 @@ def test_queued_messages_tray_all():
 
 
 # === AgentMessage ===
+
 
 def test_agent_message_all():
     msg = AgentMessage(agent_name="Agent", text="hello")
@@ -288,9 +384,12 @@ def test_agent_message_all():
 
 # === UserMessage ===
 
+
 def test_user_message_all():
     changes = []
-    um = UserMessage("hello", on_branch_change=lambda idx, txt: changes.append((idx, txt)))
+    um = UserMessage(
+        "hello", on_branch_change=lambda idx, txt: changes.append((idx, txt))
+    )
     assert um.text == "hello"
     assert len(um.branches) == 1
 
@@ -301,4 +400,3 @@ def test_user_message_all():
     um.switch_branch(1)
     assert um.current_branch_index == 1
     assert um.text == "hello"
-

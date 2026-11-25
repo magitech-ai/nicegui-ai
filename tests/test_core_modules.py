@@ -6,7 +6,7 @@ from nicegui_ai.artifact_viewer import ArtifactViewerDrawer
 from nicegui_ai.code_block import CodeBlock
 from nicegui_ai.composer import AiComposer
 from nicegui_ai.markdown import parse_markdown_blocks
-from nicegui_ai.message import UserMessage, AgentMessage
+from nicegui_ai.message import AgentMessage, UserMessage
 from nicegui_ai.stream import StreamBridge
 from nicegui_ai.tool_call import ToolCall, ToolCallCard, ToolStatus
 
@@ -23,8 +23,11 @@ def test_approval_modal_full():
 
 def test_artifact_card_full():
     card = ArtifactCard(
-        title="Test", artifact_type="file", content="c",
-        language="python", size_bytes=100,
+        title="Test",
+        artifact_type="file",
+        content="c",
+        language="python",
+        size_bytes=100,
     )
     card.toggle()
     assert card.is_open

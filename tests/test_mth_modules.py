@@ -1,10 +1,10 @@
 """Tests for mth composer, timeline, stats_pills, context_meter, command_picker modules."""
 
-from nicegui_ai.mth.composer import MthComposer
-from nicegui_ai.mth.timeline import MthTimeline
-from nicegui_ai.mth.stats_pills import MthStatsPills
-from nicegui_ai.mth.context_meter import MthContextMeter
 from nicegui_ai.mth.command_picker import MthCommandFastpicker
+from nicegui_ai.mth.composer import MthComposer
+from nicegui_ai.mth.context_meter import MthContextMeter
+from nicegui_ai.mth.stats_pills import MthStatsPills
+from nicegui_ai.mth.timeline import MthTimeline
 
 
 def test_mth_composer_init():

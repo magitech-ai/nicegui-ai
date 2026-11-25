@@ -13,28 +13,19 @@ from nicegui_ai.antigravity.history_view import ConversationHistoryView
 from nicegui_ai.antigravity.model_selector import AntigravityModelSelector
 from nicegui_ai.antigravity.settings_modal import SettingsModal
 from nicegui_ai.antigravity.sidebar import Sidebar
-from nicegui_ai.antigravity.terminal_dock import TerminalDock
-from nicegui_ai.antigravity.title_bar import TitleBar
 from nicegui_ai.antigravity.state import (
-    AppSettings,
-    ProjectConfig,
-    Session,
-    create_default_settings,
-    create_default_sessions,
+    create_default_artifact,
     create_default_automations,
+    create_default_sessions,
+    create_default_settings,
     create_default_skills,
     create_default_subagents,
-    create_default_artifact,
 )
-from nicegui_ai.approval_modal import ApprovalModal
-from nicegui_ai.artifact import ArtifactCard
-from nicegui_ai.artifact_viewer import ArtifactViewerDrawer
+from nicegui_ai.antigravity.terminal_dock import TerminalDock
+from nicegui_ai.antigravity.title_bar import TitleBar
 from nicegui_ai.composer import AiComposer
 from nicegui_ai.demo import DemoStreamFactory, demo_page
 from nicegui_ai.gallery import gallery_page
-from nicegui_ai.header import FloatingHeader, TokenRing
-from nicegui_ai.markdown import parse_markdown_blocks
-from nicegui_ai.message import UserMessage, AgentMessage
 from nicegui_ai.mth.adapter import MthStreamAdapter
 from nicegui_ai.mth.app import MthApp
 from nicegui_ai.mth.command_picker import MthCommandFastpicker
@@ -45,14 +36,9 @@ from nicegui_ai.mth.session_drawer import MthSessionDrawer
 from nicegui_ai.mth.state import MthAppState, MthSession
 from nicegui_ai.mth.stats_pills import MthStatsPills
 from nicegui_ai.mth.timeline import MthTimeline
-from nicegui_ai.mth.tool_card import MthToolCard, MthToolCallItem
-from nicegui_ai.queued_messages import QueuedMessagesTray
-from nicegui_ai.reasoning import ReasoningCard
-from nicegui_ai.schema import ToolCall, ToolStatus
+from nicegui_ai.mth.tool_card import MthToolCallItem, MthToolCard
 from nicegui_ai.stream import StreamBridge
 from nicegui_ai.thread import AiThread
-from nicegui_ai.tool_call import ToolCallCard
-from nicegui_ai.voice_pill import VoicePill
 
 
 def test_adapters_stream_events():
@@ -62,7 +48,12 @@ def test_adapters_stream_events():
         if False:
             yield
 
-    for cls in (AgUiStreamAdapter, GeminiStreamAdapter, OpenCodeStreamAdapter, OpenRouterStreamAdapter):
+    for cls in (
+        AgUiStreamAdapter,
+        GeminiStreamAdapter,
+        OpenCodeStreamAdapter,
+        OpenRouterStreamAdapter,
+    ):
         adapter = cls(source=empty_source())
         events = asyncio.run(adapter.collect())
         assert isinstance(events, list)

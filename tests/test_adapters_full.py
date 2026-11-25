@@ -1,6 +1,5 @@
 """Tests for stream adapters with full state accumulation coverage."""
 
-import pytest
 from nicegui_ai.adapters.agui import AgUiStreamAdapter
 from nicegui_ai.adapters.base import BaseStreamAdapter
 from nicegui_ai.adapters.gemini import GeminiStreamAdapter
@@ -9,7 +8,6 @@ from nicegui_ai.adapters.openrouter import OpenRouterStreamAdapter
 from nicegui_ai.schema import (
     AgUiEvent,
     AgUiEventType,
-    ToolCall,
     ToolStatus,
 )
 
@@ -50,7 +48,9 @@ def _make_tool_args(tid="t1", args=None, metadata=None):
 
 
 def _make_tool_end(tid="t1", metadata=None):
-    return AgUiEvent(type=AgUiEventType.TOOL_CALL_END, tool_call_id=tid, metadata=metadata or {})
+    return AgUiEvent(
+        type=AgUiEventType.TOOL_CALL_END, tool_call_id=tid, metadata=metadata or {}
+    )
 
 
 def _make_tool_result(tid="t1", result="ok", is_error=False, metadata=None):

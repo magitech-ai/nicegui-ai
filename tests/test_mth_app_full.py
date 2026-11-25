@@ -1,6 +1,6 @@
 """Tests for mth app module."""
 
-from nicegui_ai.mth.app import MthApp, register_mth_routes, main
+from nicegui_ai.mth.app import MthApp, main, register_mth_routes
 from nicegui_ai.mth.state import MthAppState
 
 

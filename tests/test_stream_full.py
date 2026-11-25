@@ -1,9 +1,10 @@
 """Tests for StreamBridge."""
 
 import asyncio
-from nicegui_ai.stream import StreamBridge
+
 from nicegui_ai.adapters.base import BaseStreamAdapter
 from nicegui_ai.schema import AgUiEvent, AgUiEventType
+from nicegui_ai.stream import StreamBridge
 
 
 class EmptyAdapter(BaseStreamAdapter):
@@ -29,7 +30,6 @@ def test_stream_bridge_from_adapters():
 
 
 def test_stream_bridge_consume_empty():
-    import asyncio
 
     sb = StreamBridge()
     adapter = EmptyAdapter(source=None)
@@ -53,13 +53,17 @@ def test_stream_bridge_dispatch_run_finished():
 
 def test_stream_bridge_dispatch_run_error():
     sb = StreamBridge()
-    event = AgUiEvent(type=AgUiEventType.RUN_ERROR, code="err", error="failed", metadata={})
+    event = AgUiEvent(
+        type=AgUiEventType.RUN_ERROR, code="err", error="failed", metadata={}
+    )
     sb._dispatch_event(event)
 
 
 def test_stream_bridge_dispatch_text():
     sb = StreamBridge()
-    event = AgUiEvent(type=AgUiEventType.TEXT_MESSAGE_CONTENT, content="hello", metadata={})
+    event = AgUiEvent(
+        type=AgUiEventType.TEXT_MESSAGE_CONTENT, content="hello", metadata={}
+    )
     sb._dispatch_event(event)
 
 
@@ -71,7 +75,9 @@ def test_stream_bridge_dispatch_reasoning_start():
 
 def test_stream_bridge_dispatch_reasoning_content():
     sb = StreamBridge()
-    event = AgUiEvent(type=AgUiEventType.REASONING_MESSAGE_CONTENT, content="thinking", metadata={})
+    event = AgUiEvent(
+        type=AgUiEventType.REASONING_MESSAGE_CONTENT, content="thinking", metadata={}
+    )
     sb._dispatch_event(event)
 
 

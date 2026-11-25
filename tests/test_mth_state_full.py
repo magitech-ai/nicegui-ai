@@ -2,24 +2,31 @@
 
 from nicegui_ai.mth.state import (
     MthAppState,
-    MthSession,
-    MthSessionStats,
-    MthDiffItem,
-    MthToolCallItem,
-    MthTurnItem,
     MthAttachment,
     MthCommandItem,
     MthContextOccupancy,
+    MthDiffItem,
+    MthSession,
+    MthSessionStats,
+    MthToolCallItem,
+    MthTurnItem,
     ToolExecutionStatus,
 )
 
 
 def test_mth_session_stats_all():
     stats = MthSessionStats(
-        turns=5, steps=10, llm_ms=100.0, tool_ms=50.0,
-        ttft_ms=200.0, ttft_steps=3, decode_ms=300.0,
-        decode_tokens=150, uncached_input_tokens=50,
-        cache_read_tokens=25, cache_write_tokens=10,
+        turns=5,
+        steps=10,
+        llm_ms=100.0,
+        tool_ms=50.0,
+        ttft_ms=200.0,
+        ttft_steps=3,
+        decode_ms=300.0,
+        decode_tokens=150,
+        uncached_input_tokens=50,
+        cache_read_tokens=25,
+        cache_write_tokens=10,
         output_tokens=75,
     )
     assert stats.tokens_per_second() == 150 / 0.3
@@ -74,7 +81,24 @@ def test_mth_app_state_all():
 
 def test_mth_session_all():
     session = MthSession(id="s1", title="Test Session")
-    session.turns.append(type("T", (), {"turn_id": "t1", "text": "hi", "is_deliberating": False, "status": "idle", "is_compacted": False, "compaction_summary": None, "reasoning": [], "assistant_text": "", "tool_calls": [], "tokens_used": 0})())
+    session.turns.append(
+        type(
+            "T",
+            (),
+            {
+                "turn_id": "t1",
+                "text": "hi",
+                "is_deliberating": False,
+                "status": "idle",
+                "is_compacted": False,
+                "compaction_summary": None,
+                "reasoning": [],
+                "assistant_text": "",
+                "tool_calls": [],
+                "tokens_used": 0,
+            },
+        )()
+    )
     assert len(session.turns) == 1
 
 
