@@ -1,5 +1,8 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -7,31 +10,43 @@ on:
     branches: [main]
 
 jobs:
-  check:
-    name: Lint, Type Check & Test
+  test:
+    name: Test & Lint
+    uses: magitech-ai/.github/.github/workflows/python-ci.yml@main
+    with:
+      python-version: "3.13"
+      enforce-coverage: false
+      lint-commands: |
+        uv run ruff check src/ tests/ scripts/
+        uv run ruff format --check src/ tests/ scripts/
+        uv run mypy src/
+      test-commands: "uv run pytest"
+
+  tag:
     runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        run: uv python install 3.13
-
-      - name: Install dependencies
-        run: uv sync --dev
-
-      - name: Ruff Format Check
-        run: uv run ruff format --check .
-
-      - name: Ruff Lint Check
-        run: uv run ruff check .
-
-      - name: Mypy Strict Type Check
-        run: uv run mypy src/
-
-      - name: Pytest
-        run: uv run pytest
+      - name: Push version tag and trigger release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TAG="v$VERSION"
+          if git ls-remote --exit-code --tags origin "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, nothing to do."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "$TAG"
+            git push origin "$TAG"
+            echo "Pushed tag $TAG."
+            # Tags pushed with GITHUB_TOKEN do not trigger workflows, so
+            # dispatch the release explicitly.
+            gh workflow run "Release" --ref "$TAG"
+            echo "Triggered Release workflow for $TAG."
+          fi
