@@ -211,9 +211,7 @@ class WorkspaceCustomizationsView(ui.element):
         self._dispatch_action("validate_steering", {})
 
     def _handle_toggle_mcp(self, name: str, disabled: bool) -> None:
-        self._dispatch_action(
-            "toggle_mcp_server", {"name": name, "disabled": disabled}
-        )
+        self._dispatch_action("toggle_mcp_server", {"name": name, "disabled": disabled})
 
     def _handle_add_mcp(self, name: str, transport: str, command: str) -> None:
         self._dispatch_action(
@@ -386,9 +384,7 @@ class WorkspaceCustomizationsView(ui.element):
                 ui.label("Marketplace Profiles").classes(
                     "text-xs font-semibold text-foreground uppercase tracking-wider"
                 )
-                with ui.element("div").classes(
-                    "grid grid-cols-1 md:grid-cols-3 gap-3"
-                ):
+                with ui.element("div").classes("grid grid-cols-1 md:grid-cols-3 gap-3"):
                     for prof in available_profs:
                         pname = prof["name"]
                         is_curr = pname == active_prof
@@ -430,8 +426,8 @@ class WorkspaceCustomizationsView(ui.element):
                                         )
                                         .on(
                                             "click",
-                                            lambda _, p=pname: self._handle_apply_profile(
-                                                p
+                                            lambda _, p=pname: (
+                                                self._handle_apply_profile(p)
                                             ),
                                         )
                                     ):
@@ -509,7 +505,9 @@ class WorkspaceCustomizationsView(ui.element):
                                         rune.get(
                                             "description", "Mvge runtime extension."
                                         )
-                                    ).classes("text-xs text-muted-foreground line-clamp-1")
+                                    ).classes(
+                                        "text-xs text-muted-foreground line-clamp-1"
+                                    )
 
                                 with ui.element("div").classes(
                                     "flex items-center gap-2 shrink-0"
@@ -523,8 +521,8 @@ class WorkspaceCustomizationsView(ui.element):
                                             )
                                             .on(
                                                 "click",
-                                                lambda _, n=rname: self._handle_configure_rune(
-                                                    n
+                                                lambda _, n=rname: (
+                                                    self._handle_configure_rune(n)
                                                 ),
                                             )
                                         ):
@@ -543,8 +541,8 @@ class WorkspaceCustomizationsView(ui.element):
                                         )
                                         .on(
                                             "click",
-                                            lambda _, n=rname, en=renabled: self._handle_toggle_rune(
-                                                n, not en
+                                            lambda _, n=rname, en=renabled: (
+                                                self._handle_toggle_rune(n, not en)
                                             ),
                                         )
                                     ):
@@ -590,7 +588,10 @@ class WorkspaceCustomizationsView(ui.element):
                             .classes(
                                 "px-2.5 py-1 rounded-md text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer transition-colors"
                             )
-                            .on("click", lambda _: self._handle_skill_evolution_consolidate())
+                            .on(
+                                "click",
+                                lambda _: self._handle_skill_evolution_consolidate(),
+                            )
                         ):
                             ui.label("Consolidate Experience")
 
@@ -600,7 +601,10 @@ class WorkspaceCustomizationsView(ui.element):
                             .classes(
                                 "px-2.5 py-1 rounded-md text-xs font-medium bg-secondary hover:bg-secondary/80 text-foreground border border-card-border cursor-pointer transition-colors"
                             )
-                            .on("click", lambda _: self._handle_skill_evolution_propose())
+                            .on(
+                                "click",
+                                lambda _: self._handle_skill_evolution_propose(),
+                            )
                         ):
                             ui.label("Propose Skills")
 
@@ -696,8 +700,8 @@ class WorkspaceCustomizationsView(ui.element):
                                         )
                                         .on(
                                             "click",
-                                            lambda _, s=sname: self._handle_activate_skill(
-                                                s
+                                            lambda _, s=sname: (
+                                                self._handle_activate_skill(s)
                                             ),
                                         )
                                     ):
@@ -872,9 +876,7 @@ class WorkspaceCustomizationsView(ui.element):
                                     ui.label(sname).classes(
                                         "text-sm font-medium text-foreground truncate"
                                     )
-                                    ui.label(
-                                        srv.get("transport", "stdio")
-                                    ).classes(
+                                    ui.label(srv.get("transport", "stdio")).classes(
                                         "text-[10px] font-mono px-1.5 py-0.2 rounded bg-secondary text-muted-foreground border border-card-border uppercase"
                                     )
                                     status_cls = (
@@ -914,16 +916,12 @@ class WorkspaceCustomizationsView(ui.element):
                                     .props('type="button" role="switch"')
                                     .classes(
                                         "relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors "
-                                        + (
-                                            "bg-secondary"
-                                            if disabled
-                                            else "bg-primary"
-                                        )
+                                        + ("bg-secondary" if disabled else "bg-primary")
                                     )
                                     .on(
                                         "click",
-                                        lambda _, s=sname, d=disabled: self._handle_toggle_mcp(
-                                            s, not d
+                                        lambda _, s=sname, d=disabled: (
+                                            self._handle_toggle_mcp(s, not d)
                                         ),
                                     )
                                 ):
@@ -1003,9 +1001,7 @@ class WorkspaceCustomizationsView(ui.element):
                                         ui.label(cid).classes(
                                             "text-[10px] font-mono px-1.5 py-0.2 rounded bg-secondary text-muted-foreground border border-card-border"
                                         )
-                                        ui.label(
-                                            c.get("type", "concept")
-                                        ).classes(
+                                        ui.label(c.get("type", "concept")).classes(
                                             "text-[10px] px-1.5 py-0.2 rounded bg-secondary/80 text-secondary-foreground border border-card-border uppercase"
                                         )
                                         trust_cls = {
@@ -1037,8 +1033,8 @@ class WorkspaceCustomizationsView(ui.element):
                                             )
                                             .on(
                                                 "click",
-                                                lambda _, i=cid: self._handle_verify_concept(
-                                                    i
+                                                lambda _, i=cid: (
+                                                    self._handle_verify_concept(i)
                                                 ),
                                             )
                                         ):
@@ -1210,9 +1206,9 @@ class WorkspaceCustomizationsView(ui.element):
                                             ui.label(snap["label"]).classes(
                                                 "text-[10px] px-1.5 py-0.2 rounded bg-secondary text-secondary-foreground border border-card-border"
                                             )
-                                    ui.label(
-                                        snap.get("timestamp", "recent")
-                                    ).classes("text-[11px] text-muted-foreground")
+                                    ui.label(snap.get("timestamp", "recent")).classes(
+                                        "text-[11px] text-muted-foreground"
+                                    )
 
                                 with ui.element("div").classes(
                                     "flex items-center gap-2 shrink-0"
@@ -1225,8 +1221,8 @@ class WorkspaceCustomizationsView(ui.element):
                                         )
                                         .on(
                                             "click",
-                                            lambda _, s=sid: self._handle_rollback_snapshot(
-                                                s
+                                            lambda _, s=sid: (
+                                                self._handle_rollback_snapshot(s)
                                             ),
                                         )
                                     ):

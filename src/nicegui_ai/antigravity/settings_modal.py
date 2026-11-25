@@ -265,7 +265,12 @@ class SettingsModal(ui.element):
             with ui.column().classes("flex-1 w-full overflow-y-auto p-6 gap-5"):
                 if self.active_subview:
                     self._render_subview_content(self.active_subview)
-                elif self.mvge_mode and self.active_screen in ("realms", "models", "general", "billing"):
+                elif self.mvge_mode and self.active_screen in (
+                    "realms",
+                    "models",
+                    "general",
+                    "billing",
+                ):
                     self._render_mvge_realms_screen()
                 elif self.mvge_mode and self.active_screen == "approval":
                     self._render_mvge_approval_screen()
@@ -273,7 +278,11 @@ class SettingsModal(ui.element):
                     self._render_mvge_trust_screen()
                 elif self.mvge_mode and self.active_screen == "compaction":
                     self._render_mvge_compaction_screen()
-                elif self.mvge_mode and self.active_screen in ("diagnostics", "about", "advanced"):
+                elif self.mvge_mode and self.active_screen in (
+                    "diagnostics",
+                    "about",
+                    "advanced",
+                ):
                     self._render_mvge_diagnostics_screen()
                 elif self.active_screen == "general":
                     self._render_general_screen()
@@ -935,128 +944,278 @@ class SettingsModal(ui.element):
     def _render_mvge_realms_screen(self) -> None:
         realms = self.mvge_data.get("realms", [])
         with ui.column().classes("w-full gap-4"):
-            ui.label("Realms & API Keys").classes("text-[16px] font-semibold text-[#cccccc]")
-            ui.label("Configure inference endpoints and API credentials for Mvge providers.").classes("text-[12px] text-[#6e6e6e]")
+            ui.label("Realms & API Keys").classes(
+                "text-[16px] font-semibold text-[#cccccc]"
+            )
+            ui.label(
+                "Configure inference endpoints and API credentials for Mvge providers."
+            ).classes("text-[12px] text-[#6e6e6e]")
             if not realms:
                 realms = [
-                    {"id": "opencode", "name": "OpenCode", "base_url": "https://opencode.ai/inference/openai/v1", "env_var": "OPENCODE_API_KEY", "is_router": False, "has_key": False, "masked_key": "", "default_model": "opencode/big-pickle", "keyless_models": ["opencode/big-pickle", "opencode/space-bunny-free"], "rune_installed": True, "rune_name": "opencode-realm"},
-                    {"id": "openrouter", "name": "OpenRouter", "base_url": "https://openrouter.ai/api/v1", "env_var": "OPENROUTER_API_KEY", "is_router": True, "has_key": False, "masked_key": "", "default_model": "openrouter/free", "keyless_models": [], "rune_installed": True, "rune_name": "openrouter-realm"},
-                    {"id": "pollinations", "name": "Pollinations", "base_url": "https://text.pollinations.ai/openai", "env_var": "POLLINATIONS_API_KEY", "is_router": False, "has_key": False, "masked_key": "", "default_model": "pollinations/openai", "keyless_models": ["pollinations/openai"], "rune_installed": True, "rune_name": "pollinations-realm"},
+                    {
+                        "id": "opencode",
+                        "name": "OpenCode",
+                        "base_url": "https://opencode.ai/inference/openai/v1",
+                        "env_var": "OPENCODE_API_KEY",
+                        "is_router": False,
+                        "has_key": False,
+                        "masked_key": "",
+                        "default_model": "opencode/big-pickle",
+                        "keyless_models": [
+                            "opencode/big-pickle",
+                            "opencode/space-bunny-free",
+                        ],
+                        "rune_installed": True,
+                        "rune_name": "opencode-realm",
+                    },
+                    {
+                        "id": "openrouter",
+                        "name": "OpenRouter",
+                        "base_url": "https://openrouter.ai/api/v1",
+                        "env_var": "OPENROUTER_API_KEY",
+                        "is_router": True,
+                        "has_key": False,
+                        "masked_key": "",
+                        "default_model": "openrouter/free",
+                        "keyless_models": [],
+                        "rune_installed": True,
+                        "rune_name": "openrouter-realm",
+                    },
+                    {
+                        "id": "pollinations",
+                        "name": "Pollinations",
+                        "base_url": "https://text.pollinations.ai/openai",
+                        "env_var": "POLLINATIONS_API_KEY",
+                        "is_router": False,
+                        "has_key": False,
+                        "masked_key": "",
+                        "default_model": "pollinations/openai",
+                        "keyless_models": ["pollinations/openai"],
+                        "rune_installed": True,
+                        "rune_name": "pollinations-realm",
+                    },
                 ]
             for r in realms:
-                with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2.5"):
+                with ui.column().classes(
+                    "w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2.5"
+                ):
                     with ui.row().classes("items-center justify-between w-full"):
                         with ui.row().classes("items-center gap-2"):
-                            ui.label(r.get("name", r.get("id"))).classes("text-[14px] font-medium text-[#cccccc]")
-                            ui.badge("Router" if r.get("is_router") else "Direct", color="cyan-9").props("dense text-[10px]")
+                            ui.label(r.get("name", r.get("id"))).classes(
+                                "text-[14px] font-medium text-[#cccccc]"
+                            )
+                            ui.badge(
+                                "Router" if r.get("is_router") else "Direct",
+                                color="cyan-9",
+                            ).props("dense text-[10px]")
                             if r.get("has_key"):
-                                ui.badge("Configured", color="positive").props("dense text-[10px]")
+                                ui.badge("Configured", color="positive").props(
+                                    "dense text-[10px]"
+                                )
                             else:
-                                ui.badge("Keyless" if r.get("keyless_models") else "Needs Key", color="grey-8").props("dense text-[10px]")
+                                ui.badge(
+                                    "Keyless"
+                                    if r.get("keyless_models")
+                                    else "Needs Key",
+                                    color="grey-8",
+                                ).props("dense text-[10px]")
                         if not r.get("rune_installed", True):
                             rn = r.get("rune_name", "")
                             ui.button(
                                 "Install Rune",
-                                on_click=lambda name=rn: self._handle_install_rune(name),
+                                on_click=lambda name=rn: self._handle_install_rune(
+                                    name
+                                ),
                             ).props("flat dense no-caps color=primary text-[11px]")
-                    ui.label(f"Base URL: {r.get('base_url')} • Env: {r.get('env_var')}").classes("text-[11px] font-mono text-[#6e6e6e]")
+                    ui.label(
+                        f"Base URL: {r.get('base_url')} • Env: {r.get('env_var')}"
+                    ).classes("text-[11px] font-mono text-[#6e6e6e]")
                     if r.get("keyless_models"):
                         with ui.row().classes("items-center gap-1 flex-wrap"):
-                            ui.label("Free models:").classes("text-[10px] text-[#6e6e6e]")
+                            ui.label("Free models:").classes(
+                                "text-[10px] text-[#6e6e6e]"
+                            )
                             for km in r["keyless_models"]:
-                                ui.badge(km, color="dark").props("dense text-[10px] font-mono text-[#aaaaaa]")
+                                ui.badge(km, color="dark").props(
+                                    "dense text-[10px] font-mono text-[#aaaaaa]"
+                                )
                     with ui.row().classes("items-center gap-2 w-full mt-1"):
-                        key_input = ui.input(
-                            placeholder=r.get("masked_key") or f"Enter {r.get('env_var')}...",
-                            password=True,
-                        ).props("dense borderless").classes("flex-1 px-2.5 py-1 bg-[#101010] border border-[#222222] rounded font-mono text-[11px] text-[#cccccc]")
+                        key_input = (
+                            ui.input(
+                                placeholder=r.get("masked_key")
+                                or f"Enter {r.get('env_var')}...",
+                                password=True,
+                            )
+                            .props("dense borderless")
+                            .classes(
+                                "flex-1 px-2.5 py-1 bg-[#101010] border border-[#222222] rounded font-mono text-[11px] text-[#cccccc]"
+                            )
+                        )
                         rid = r.get("id", "")
                         ui.button(
                             "Save Key",
-                            on_click=lambda inp=key_input, realm_id=rid: self._handle_save_realm_key(realm_id, inp.value),
-                        ).props("flat dense no-caps color=primary").classes("text-[11px]")
+                            on_click=lambda inp=key_input, realm_id=rid: (
+                                self._handle_save_realm_key(realm_id, inp.value)
+                            ),
+                        ).props("flat dense no-caps color=primary").classes(
+                            "text-[11px]"
+                        )
                         if r.get("has_key"):
                             ui.button(
                                 "Clear",
-                                on_click=lambda realm_id=rid: self._handle_clear_realm_key(realm_id),
-                            ).props("flat dense no-caps color=negative").classes("text-[11px]")
+                                on_click=lambda realm_id=rid: (
+                                    self._handle_clear_realm_key(realm_id)
+                                ),
+                            ).props("flat dense no-caps color=negative").classes(
+                                "text-[11px]"
+                            )
 
     def _render_mvge_approval_screen(self) -> None:
         appr = self.mvge_data.get("approval", {})
         warnings = appr.get("warnings", [])
         with ui.column().classes("w-full gap-4"):
-            ui.label("Approval Policy & Audit Trail").classes("text-[16px] font-semibold text-[#cccccc]")
-            ui.label("Fail-closed spell execution gate, code-digest grants, and durable audit log.").classes("text-[12px] text-[#6e6e6e]")
+            ui.label("Approval Policy & Audit Trail").classes(
+                "text-[16px] font-semibold text-[#cccccc]"
+            )
+            ui.label(
+                "Fail-closed spell execution gate, code-digest grants, and durable audit log."
+            ).classes("text-[12px] text-[#6e6e6e]")
             if warnings:
-                with ui.column().classes("w-full p-3 rounded-lg bg-amber-950/40 border border-amber-600/50 gap-1"):
+                with ui.column().classes(
+                    "w-full p-3 rounded-lg bg-amber-950/40 border border-amber-600/50 gap-1"
+                ):
                     for w in warnings:
                         with ui.row().classes("items-center gap-2"):
                             AntigravityIcon("alert", size=14, classes="text-amber-400")
                             ui.label(w).classes("text-[12px] text-amber-200")
             sess = appr.get("session", {})
-            with ui.row().classes("w-full items-center justify-between p-3 rounded-xl bg-[#151515] border border-[#222222]"):
+            with ui.row().classes(
+                "w-full items-center justify-between p-3 rounded-xl bg-[#151515] border border-[#222222]"
+            ):
                 with ui.column().classes("gap-0.5"):
-                    ui.label("Session Approve All").classes("text-[13px] font-medium text-[#cccccc]")
-                    ui.label("Auto-allows non-schemaless spells for the current Tome").classes("text-[11px] text-[#6e6e6e]")
+                    ui.label("Session Approve All").classes(
+                        "text-[13px] font-medium text-[#cccccc]"
+                    )
+                    ui.label(
+                        "Auto-allows non-schemaless spells for the current Tome"
+                    ).classes("text-[11px] text-[#6e6e6e]")
                 ui.switch(
                     value=sess.get("approve_all_active", False),
-                    on_change=lambda e: self._handle_toggle_session_approve_all(e.value),
+                    on_change=lambda e: self._handle_toggle_session_approve_all(
+                        e.value
+                    ),
                 ).props("dense")
-            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
-                ui.label("Always-Allowed Spell Grants").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"
+            ):
+                ui.label("Always-Allowed Spell Grants").classes(
+                    "text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
                 allowed = appr.get("always_allowed", [])
                 if not allowed:
-                    ui.label("No active persistent allow grants.").classes("text-[11px] text-[#6e6e6e] italic")
+                    ui.label("No active persistent allow grants.").classes(
+                        "text-[11px] text-[#6e6e6e] italic"
+                    )
                 for grant in allowed:
-                    with ui.row().classes("items-center justify-between w-full py-1 border-b border-[#222222]/50"):
+                    with ui.row().classes(
+                        "items-center justify-between w-full py-1 border-b border-[#222222]/50"
+                    ):
                         with ui.row().classes("items-center gap-2"):
-                            ui.label(grant.get("spell", "")).classes("font-mono text-[12px] text-emerald-400")
-                            ui.badge(grant.get("scope_label", "Project"), color="dark").props("dense text-[10px]")
+                            ui.label(grant.get("spell", "")).classes(
+                                "font-mono text-[12px] text-emerald-400"
+                            )
+                            ui.badge(
+                                grant.get("scope_label", "Project"), color="dark"
+                            ).props("dense text-[10px]")
                             for c in grant.get("constraint_labels", []):
                                 ui.badge(c, color="cyan-9").props("dense text-[9px]")
                         gid = grant.get("id", "")
                         ui.button(
                             "Revoke",
-                            on_click=lambda g=gid: self._handle_revoke_grant("allow_rule", g),
+                            on_click=lambda g=gid: self._handle_revoke_grant(
+                                "allow_rule", g
+                            ),
                         ).props("flat dense no-caps color=negative text-[11px]")
-            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
-                ui.label("Never-Allowed (Deny) Rules").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"
+            ):
+                ui.label("Never-Allowed (Deny) Rules").classes(
+                    "text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
                 denied = appr.get("never_allowed", [])
                 if not denied:
-                    ui.label("No active persistent deny rules.").classes("text-[11px] text-[#6e6e6e] italic")
+                    ui.label("No active persistent deny rules.").classes(
+                        "text-[11px] text-[#6e6e6e] italic"
+                    )
                 for d in denied:
-                    with ui.row().classes("items-center justify-between w-full py-1 border-b border-[#222222]/50"):
-                        ui.label(d.get("spell", "")).classes("font-mono text-[12px] text-rose-400")
+                    with ui.row().classes(
+                        "items-center justify-between w-full py-1 border-b border-[#222222]/50"
+                    ):
+                        ui.label(d.get("spell", "")).classes(
+                            "font-mono text-[12px] text-rose-400"
+                        )
                         did = d.get("id", "")
                         ui.button(
                             "Revoke",
-                            on_click=lambda g=did: self._handle_revoke_grant("deny_rule", g),
+                            on_click=lambda g=did: self._handle_revoke_grant(
+                                "deny_rule", g
+                            ),
                         ).props("flat dense no-caps color=negative text-[11px]")
-            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
-                ui.label("Recent Execution Audit Trail (audit.jsonl)").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"
+            ):
+                ui.label("Recent Execution Audit Trail (audit.jsonl)").classes(
+                    "text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
                 recent = appr.get("recent_activity", [])
                 if not recent:
-                    ui.label("No recent spell execution activity recorded.").classes("text-[11px] text-[#6e6e6e] italic")
+                    ui.label("No recent spell execution activity recorded.").classes(
+                        "text-[11px] text-[#6e6e6e] italic"
+                    )
                 for act in recent[:10]:
-                    with ui.row().classes("items-center justify-between w-full text-[11px] py-1 border-b border-[#222222]/30 font-mono"):
+                    with ui.row().classes(
+                        "items-center justify-between w-full text-[11px] py-1 border-b border-[#222222]/30 font-mono"
+                    ):
                         ui.label(act.get("spell", "")).classes("text-white")
-                        ui.label(act.get("outcome", "")).classes("text-emerald-400" if act.get("outcome") in ("completed", "allow") else "text-amber-400")
+                        ui.label(act.get("outcome", "")).classes(
+                            "text-emerald-400"
+                            if act.get("outcome") in ("completed", "allow")
+                            else "text-amber-400"
+                        )
                         ui.label(act.get("reason_code", "")).classes("text-[#6e6e6e]")
                         ui.label(act.get("timestamp", "")).classes("text-[#6e6e6e]")
 
     def _render_mvge_trust_screen(self) -> None:
         trust = self.mvge_data.get("trust", {})
         status = trust.get("status", "trusted")
-        badge_color = "positive" if status == "trusted" else "negative" if status == "changed" else "amber-7"
+        badge_color = (
+            "positive"
+            if status == "trusted"
+            else "negative"
+            if status == "changed"
+            else "amber-7"
+        )
         with ui.column().classes("w-full gap-4"):
-            ui.label("Workspace Trust & Steering").classes("text-[16px] font-semibold text-[#cccccc]")
-            ui.label("Workspace isolation, extension fingerprinting, and AGENTS.md rule resolution.").classes("text-[12px] text-[#6e6e6e]")
-            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"):
+            ui.label("Workspace Trust & Steering").classes(
+                "text-[16px] font-semibold text-[#cccccc]"
+            )
+            ui.label(
+                "Workspace isolation, extension fingerprinting, and AGENTS.md rule resolution."
+            ).classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"
+            ):
                 with ui.row().classes("items-center justify-between w-full"):
                     with ui.column().classes("gap-0.5"):
-                        ui.label(trust.get("workspace", "Current Workspace")).classes("font-mono text-[13px] text-white")
-                        ui.label(f"SHA-256 Fingerprint: {trust.get('fingerprint', 'n/a')}").classes("text-[10px] font-mono text-[#6e6e6e]")
-                    ui.badge(status.upper(), color=badge_color).props("dense text-[11px]")
+                        ui.label(trust.get("workspace", "Current Workspace")).classes(
+                            "font-mono text-[13px] text-white"
+                        )
+                        ui.label(
+                            f"SHA-256 Fingerprint: {trust.get('fingerprint', 'n/a')}"
+                        ).classes("text-[10px] font-mono text-[#6e6e6e]")
+                    ui.badge(status.upper(), color=badge_color).props(
+                        "dense text-[11px]"
+                    )
                 with ui.row().classes("items-center gap-2"):
                     ui.button(
                         "Trust Workspace",
@@ -1073,17 +1232,37 @@ class SettingsModal(ui.element):
         window = comp.get("context_window", 128000)
         pct = min(1.0, used / window) if window > 0 else 0.0
         with ui.column().classes("w-full gap-4"):
-            ui.label("Compaction & Mana Pool").classes("text-[16px] font-semibold text-[#cccccc]")
-            ui.label("Automatic Tome compaction and context window memory budgeting.").classes("text-[12px] text-[#6e6e6e]")
-            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"):
+            ui.label("Compaction & Mana Pool").classes(
+                "text-[16px] font-semibold text-[#cccccc]"
+            )
+            ui.label(
+                "Automatic Tome compaction and context window memory budgeting."
+            ).classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-3"
+            ):
                 with ui.row().classes("items-center justify-between w-full"):
-                    ui.label("Current Mana Pool Usage").classes("text-[13px] font-medium text-[#cccccc]")
-                    ui.label(f"{used:,} / {window:,} Mana ({pct * 100:.1f}%)").classes("font-mono text-[12px] text-cyan-400")
-                ui.linear_progress(value=pct).props("color=cyan").classes("w-full h-2 rounded")
-                with ui.row().classes("items-center justify-between w-full pt-2 border-t border-[#222222]"):
-                    ui.label(f"Reserve Mana: {comp.get('reserve_mana', 16384)}").classes("text-[11px] text-[#6e6e6e]")
-                    ui.label(f"Keep Recent: {comp.get('keep_recent_mana', 8192)}").classes("text-[11px] text-[#6e6e6e]")
-                    ui.label(f"Threshold: {comp.get('threshold', 0.85)}").classes("text-[11px] text-[#6e6e6e]")
+                    ui.label("Current Mana Pool Usage").classes(
+                        "text-[13px] font-medium text-[#cccccc]"
+                    )
+                    ui.label(f"{used:,} / {window:,} Mana ({pct * 100:.1f}%)").classes(
+                        "font-mono text-[12px] text-cyan-400"
+                    )
+                ui.linear_progress(value=pct).props("color=cyan").classes(
+                    "w-full h-2 rounded"
+                )
+                with ui.row().classes(
+                    "items-center justify-between w-full pt-2 border-t border-[#222222]"
+                ):
+                    ui.label(
+                        f"Reserve Mana: {comp.get('reserve_mana', 16384)}"
+                    ).classes("text-[11px] text-[#6e6e6e]")
+                    ui.label(
+                        f"Keep Recent: {comp.get('keep_recent_mana', 8192)}"
+                    ).classes("text-[11px] text-[#6e6e6e]")
+                    ui.label(f"Threshold: {comp.get('threshold', 0.85)}").classes(
+                        "text-[11px] text-[#6e6e6e]"
+                    )
                 ui.button(
                     "Compact Active Tome Now (/compact)",
                     icon="compress",
@@ -1093,17 +1272,38 @@ class SettingsModal(ui.element):
     def _render_mvge_diagnostics_screen(self) -> None:
         diag = self.mvge_data.get("diagnostics", {})
         with ui.column().classes("w-full gap-4"):
-            ui.label("Diagnostics & MCP").classes("text-[16px] font-semibold text-[#cccccc]")
-            ui.label("System dependencies, OpenTelemetry, and runtime environment.").classes("text-[12px] text-[#6e6e6e]")
-            with ui.column().classes("w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
-                ui.label(f"Mvge Agent Engine v{diag.get('mvge_version', '0.3.0')}").classes("text-[14px] font-bold text-white")
-                ui.label(f"Active Mvge: {diag.get('active_mvge', 'coding_mvge')} • Profile: {diag.get('active_profile', 'coding')}").classes("text-[12px] text-[#6e6e6e]")
-            with ui.column().classes("w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"):
-                ui.label("System Checks").classes("text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+            ui.label("Diagnostics & MCP").classes(
+                "text-[16px] font-semibold text-[#cccccc]"
+            )
+            ui.label(
+                "System dependencies, OpenTelemetry, and runtime environment."
+            ).classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-4 rounded-xl bg-[#151515] border border-[#222222] gap-2"
+            ):
+                ui.label(
+                    f"Mvge Agent Engine v{diag.get('mvge_version', '0.3.0')}"
+                ).classes("text-[14px] font-bold text-white")
+                ui.label(
+                    f"Active Mvge: {diag.get('active_mvge', 'coding_mvge')} • Profile: {diag.get('active_profile', 'coding')}"
+                ).classes("text-[12px] text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-full p-3 rounded-xl bg-[#151515] border border-[#222222] gap-2"
+            ):
+                ui.label("System Checks").classes(
+                    "text-[12px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
                 for chk in diag.get("checks", []):
-                    with ui.row().classes("items-center justify-between w-full text-[12px]"):
-                        ui.label(chk.get("name", "")).classes("font-mono text-[#cccccc]")
-                        ui.badge("OK" if chk.get("ok") else "MISSING", color="positive" if chk.get("ok") else "negative").props("dense text-[10px]")
+                    with ui.row().classes(
+                        "items-center justify-between w-full text-[12px]"
+                    ):
+                        ui.label(chk.get("name", "")).classes(
+                            "font-mono text-[#cccccc]"
+                        )
+                        ui.badge(
+                            "OK" if chk.get("ok") else "MISSING",
+                            color="positive" if chk.get("ok") else "negative",
+                        ).props("dense text-[10px]")
 
     def _handle_save_realm_key(self, realm: str, key: str) -> None:
         if self.on_mvge_action:

@@ -50,7 +50,9 @@ def test_mvge_settings_modal_realms_and_approval() -> None:
         ],
         "approval": {
             "session": {"session_id": "tome-test-1", "approve_all_active": False},
-            "trusted_projects": [{"id": "tp-1", "root": "/mnt/storage/projects/mvge", "enabled": True}],
+            "trusted_projects": [
+                {"id": "tp-1", "root": "/mnt/storage/projects/mvge", "enabled": True}
+            ],
             "always_allowed": [
                 {
                     "id": "grant-1",
@@ -59,9 +61,20 @@ def test_mvge_settings_modal_realms_and_approval() -> None:
                     "constraint_labels": ["path_within_project"],
                 }
             ],
-            "never_allowed": [{"id": "grant-deny-1", "spell": "dangerous_spell", "scope_label": "Global"}],
+            "never_allowed": [
+                {
+                    "id": "grant-deny-1",
+                    "spell": "dangerous_spell",
+                    "scope_label": "Global",
+                }
+            ],
             "recent_activity": [
-                {"spell": "bash", "outcome": "completed", "timestamp": "12:00:00", "reason_code": "read_only"}
+                {
+                    "spell": "bash",
+                    "outcome": "completed",
+                    "timestamp": "12:00:00",
+                    "reason_code": "read_only",
+                }
             ],
             "warnings": ["Integrity notice: 1 grant shadowed."],
         },
@@ -101,7 +114,10 @@ def test_mvge_settings_modal_realms_and_approval() -> None:
 
     assert modal.active_screen == "realms"
     modal._handle_save_realm_key("opencode", "oc_sk_new_key_123")
-    assert actions[-1] == ("save_realm_key", {"realm": "opencode", "api_key": "oc_sk_new_key_123"})
+    assert actions[-1] == (
+        "save_realm_key",
+        {"realm": "opencode", "api_key": "oc_sk_new_key_123"},
+    )
 
     modal._handle_clear_realm_key("opencode")
     assert actions[-1] == ("clear_realm_key", {"realm": "opencode"})
@@ -112,7 +128,10 @@ def test_mvge_settings_modal_realms_and_approval() -> None:
     assert actions[-1] == ("toggle_session_approve_all", {"enabled": True})
 
     modal._handle_revoke_grant("allow_rule", "grant-1")
-    assert actions[-1] == ("revoke_grant", {"kind": "allow_rule", "grant_id": "grant-1"})
+    assert actions[-1] == (
+        "revoke_grant",
+        {"kind": "allow_rule", "grant_id": "grant-1"},
+    )
 
     modal.set_screen("trust")
     assert modal.active_screen == "trust"
@@ -164,7 +183,13 @@ def test_workspace_customizations_view_ecosystem_tabs() -> None:
         ],
         "skill_evolution": {
             "traces_count": 42,
-            "patterns": [{"id": "pat-1", "title": "Error Handling in Bash", "summary": "Use tail accumulator"}],
+            "patterns": [
+                {
+                    "id": "pat-1",
+                    "title": "Error Handling in Bash",
+                    "summary": "Use tail accumulator",
+                }
+            ],
             "impact_log": "+ added skill bash-guard",
         },
         "steering": {
@@ -215,7 +240,9 @@ def test_workspace_customizations_view_ecosystem_tabs() -> None:
             "agent_name": "coding_mvge",
             "config_dir": "/home/vanluther/.agents/agents/coding_mvge",
             "reload_needed": False,
-            "snapshots": [{"id": "snap-1", "timestamp": "2026-11-05 12:00", "label": "pre-edit"}],
+            "snapshots": [
+                {"id": "snap-1", "timestamp": "2026-11-05 12:00", "label": "pre-edit"}
+            ],
         },
     }
 
@@ -240,7 +267,10 @@ def test_workspace_customizations_view_ecosystem_tabs() -> None:
     cv.set_tab("steering")
     assert cv.active_tab == "steering"
     cv._handle_save_steering("project", "# Project Updated")
-    assert actions[-1] == ("save_steering", {"scope": "project", "content": "# Project Updated"})
+    assert actions[-1] == (
+        "save_steering",
+        {"scope": "project", "content": "# Project Updated"},
+    )
 
     cv.set_tab("mcp")
     assert cv.active_tab == "mcp"
