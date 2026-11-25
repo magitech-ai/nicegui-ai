@@ -1,6 +1,6 @@
 """nicegui-ai: Modern AI agent UI primitives for NiceGUI."""
 
-from nicegui_ai import antigravity
+from nicegui_ai import antigravity, mth
 from nicegui_ai.adapters import (
     AgUiStreamAdapter,
     BaseStreamAdapter,
@@ -25,6 +25,7 @@ from nicegui_ai.model_selector import (
     ModelSelector,
     ReasoningEffortSelector,
 )
+from nicegui_ai.mth import MthApp
 from nicegui_ai.queued_messages import QueuedMessagesTray
 from nicegui_ai.reasoning import ReasoningCard
 from nicegui_ai.schema import (
@@ -73,6 +74,7 @@ __all__ = [
     "MessageRole",
     "ModelOption",
     "ModelSelector",
+    "MthApp",
     "OpenCodeStreamAdapter",
     "OpenRouterStreamAdapter",
     "QueuedMessage",
@@ -96,6 +98,7 @@ __all__ = [
     "VoicePill",
     "antigravity",
     "get_lucide_svg",
+    "mth",
     "parse_markdown_blocks",
     "setup_ai_theme",
 ]

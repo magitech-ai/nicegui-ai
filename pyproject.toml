@@ -38,11 +38,13 @@ nicegui-ai = "nicegui_ai.gallery:main"
 nicegui-ai-demo = "nicegui_ai.demo:main"
 nicegui-antigravity = "nicegui_ai.antigravity.app:main"
 nicegui-ai-antigravity = "nicegui_ai.antigravity.app:main"
+nicegui-mth = "nicegui_ai.mth.app:main"
+nicegui-ai-mth = "nicegui_ai.mth.app:main"
 
 [project.urls]
-Homepage = "https://github.com/IAmNo1Special/nicegui-ai"
-Repository = "https://github.com/IAmNo1Special/nicegui-ai"
-Issues = "https://github.com/IAmNo1Special/nicegui-ai/issues"
+Homepage = "https://github.com/magitech-ai/nicegui-ai"
+Repository = "https://github.com/magitech-ai/nicegui-ai"
+Issues = "https://github.com/magitech-ai/nicegui-ai/issues"
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
