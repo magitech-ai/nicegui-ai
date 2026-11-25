@@ -654,9 +654,9 @@ def test_register_antigravity_routes_body():
     """register_antigravity_routes: registers '/' page."""
     from nicegui.client import Client
 
-    if "/" not in Client.page_routes.values():
+    if "/" not in Client.page_routes:
         register_antigravity_routes("/")
-    assert "/" in Client.page_routes.values()
+    assert "/" in Client.page_routes
 
     # parse_request_query works on a Starlette Request
     scope = {
