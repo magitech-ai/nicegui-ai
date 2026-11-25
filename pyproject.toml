@@ -55,6 +55,8 @@ dev = [
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=6.0.0",
+    "coverage>=7.0.0",
     "ruff>=0.17.2",
 ]
 
@@ -83,3 +85,4 @@ exclude = ["tests/", "demo/"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = ["--cov=src/nicegui_ai", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=100"]
