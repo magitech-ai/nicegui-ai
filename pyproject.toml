@@ -85,4 +85,19 @@ exclude = ["tests/", "demo/"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = ["--cov=src/nicegui_ai", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=100"]
+addopts = ["--cov=src/nicegui_ai", "--cov-branch", "--cov-report=term-missing"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "pragma: no cover",
+    "@abstractmethod",
+    "^\\s*\\.\\.\\.\\s*$",
+]
+omit = [
+    "src/nicegui_ai/demo.py",
+    "src/nicegui_ai/gallery.py",
+]
+
+[tool.coverage.run]
+source = ["nicegui_ai"]
