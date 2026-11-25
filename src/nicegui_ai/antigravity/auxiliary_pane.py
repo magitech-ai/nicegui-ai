@@ -266,10 +266,11 @@ class AuxiliaryPane(ui.element):
         self.on_aux_action = on_aux_action
 
         # In Mvge mode, default initial tab to review (terminal is in bottom dock)
+        self.active_tab: AuxTabType
         if self.mvge_mode and initial_tab in ("overview", "terminal"):
-            self.active_tab: AuxTabType = "review"
+            self.active_tab = "review"
         else:
-            self.active_tab: AuxTabType = initial_tab
+            self.active_tab = initial_tab
 
         self.plus_dropdown_open = initial_open_plus
         self.customize_overview_open = initial_open_overview_customize
@@ -1751,8 +1752,7 @@ class AuxiliaryPane(ui.element):
                         ui.button(
                             "Send",
                             on_click=lambda inp=msg_input, sid=target_sub_id: (
-                                self._handle_message_submvge(sid, inp.value),
-                                setattr(inp, "value", ""),
+                                self._send_submvge_and_clear(sid, inp.value, inp)
                             ),
                         ).props("flat dense no-caps color=primary").classes(
                             "text-[11px]"
@@ -1770,6 +1770,12 @@ class AuxiliaryPane(ui.element):
                 "restore_checkpoint_file",
                 {"path": path, "leaf_id": self.selected_checkpoint_leaf},
             )
+
+    def _send_submvge_and_clear(
+        self, sub_mvge_id: str, message: str, input_widget
+    ) -> None:
+        self._handle_message_submvge(sub_mvge_id, message)
+        input_widget.value = ""
 
     def _handle_message_submvge(self, sub_mvge_id: str, message: str) -> None:
         if self.on_aux_action:

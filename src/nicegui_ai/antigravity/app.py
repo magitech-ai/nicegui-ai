@@ -178,7 +178,7 @@ class AntigravityApp(ui.element):
                     description=art0.get("summary"),
                 )
             else:
-                self.active_artifact = None
+                self.active_artifact = create_default_artifact()
         else:
             self.active_artifact = create_default_artifact()
 
