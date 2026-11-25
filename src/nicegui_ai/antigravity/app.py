@@ -78,7 +78,8 @@ class AntigravityApp(ui.element):
         on_open_settings: Callable[[str | None], Any] | None = None,
         on_settings_change: Callable[[AppSettings], Any] | None = None,
         on_model_change: Callable[[str], Any] | None = None,
-        on_effort_change: Callable[[Literal["Low", "Medium", "High"]], Any] | None = None,
+        on_effort_change: Callable[[Literal["Low", "Medium", "High"]], Any]
+        | None = None,
         mvge_data: dict[str, Any] | None = None,
         ecosystem_data: dict[str, Any] | None = None,
         checkpoints: list[dict[str, Any]] | None = None,
@@ -316,7 +317,9 @@ class AntigravityApp(ui.element):
                                 on_toggle_pin=self._handle_toggle_pin,
                                 on_toggle_archive=self._handle_toggle_archive,
                                 on_delete_session=self._handle_delete_session,
-                                on_new_conversation=lambda: self._handle_new_conversation(None),
+                                on_new_conversation=lambda: (
+                                    self._handle_new_conversation(None)
+                                ),
                             )
                         elif self.center_view == "automations":
                             AutomationsView(
@@ -329,13 +332,17 @@ class AntigravityApp(ui.element):
                                 on_run_automation_now=self._handle_run_automation_now,
                                 initial_modal_open=self.params.get("openNewAutomation")
                                 == "true",
-                                initial_selected_trigger_id=self.params.get("triggerId"),
+                                initial_selected_trigger_id=self.params.get(
+                                    "triggerId"
+                                ),
                             )
                         elif self.center_view == "customizations":
                             WorkspaceCustomizationsView(
                                 projects=self.settings.projects,
                                 active_project_id=self.active_project_id,
-                                initial_tab=self.params.get("customizationsTab", "runes"),
+                                initial_tab=self.params.get(
+                                    "customizationsTab", "runes"
+                                ),
                                 on_select_project=self._handle_select_project,
                                 on_open_global_customizations=lambda: (
                                     self._handle_open_settings("customizations")
@@ -355,14 +362,23 @@ class AntigravityApp(ui.element):
                                 selected_effort=self.selected_effort,
                                 is_streaming=self.is_streaming,
                                 is_aux_open=self.aux_open,
-                                initial_open_model=self.params.get("openModel") == "true",
-                                initial_open_context=self.params.get("openContext") == "true",
-                                initial_open_kebab=self.params.get("openKebab") == "true",
-                                initial_open_modes=self.params.get("openModes") == "true",
-                                initial_open_side_question=self.params.get("openSideQuestion")
+                                initial_open_model=self.params.get("openModel")
                                 == "true",
-                                initial_open_fastpick=self.params.get("openFastpick") == "true",
-                                initial_open_lifted_menu=self.params.get("openLiftedMenu")
+                                initial_open_context=self.params.get("openContext")
+                                == "true",
+                                initial_open_kebab=self.params.get("openKebab")
+                                == "true",
+                                initial_open_modes=self.params.get("openModes")
+                                == "true",
+                                initial_open_side_question=self.params.get(
+                                    "openSideQuestion"
+                                )
+                                == "true",
+                                initial_open_fastpick=self.params.get("openFastpick")
+                                == "true",
+                                initial_open_lifted_menu=self.params.get(
+                                    "openLiftedMenu"
+                                )
                                 == "true",
                                 on_send_message=self._handle_send_message,
                                 on_select_session=self._handle_select_session,

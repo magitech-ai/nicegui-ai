@@ -251,10 +251,16 @@ class AuxiliaryPane(ui.element):
             changed_files if changed_files is not None else CHANGED_FILES
         )
         self.artifact_width = artifact_width
-        self.mvge_mode = mvge_mode or (persona is not None and getattr(persona, "app_name", "") == "Mvge") or on_aux_action is not None
+        self.mvge_mode = (
+            mvge_mode
+            or (persona is not None and getattr(persona, "app_name", "") == "Mvge")
+            or on_aux_action is not None
+        )
         self.checkpoints = list(checkpoints) if checkpoints is not None else []
         self.selected_checkpoint_leaf = selected_checkpoint_leaf
-        self.workspace_files = list(workspace_files) if workspace_files is not None else []
+        self.workspace_files = (
+            list(workspace_files) if workspace_files is not None else []
+        )
         self.artifacts_list = list(artifacts_list) if artifacts_list is not None else []
         self.live_submvges = list(live_submvges) if live_submvges is not None else []
         self.on_aux_action = on_aux_action
@@ -535,8 +541,14 @@ class AuxiliaryPane(ui.element):
             with ui.row().classes("items-center gap-1"):
                 if self.mvge_mode and self.on_aux_action:
                     term_btn = (
-                        ui.button(on_click=lambda: self.on_aux_action("toggle_terminal_dock", {}))
-                        .props('flat dense no-caps data-testid="aux-terminal-dock-toggle"')
+                        ui.button(
+                            on_click=lambda: self.on_aux_action(
+                                "toggle_terminal_dock", {}
+                            )
+                        )
+                        .props(
+                            'flat dense no-caps data-testid="aux-terminal-dock-toggle"'
+                        )
                         .classes(
                             "p-1.5 text-[#6e6e6e] hover:text-[#cccccc] rounded-md hover:bg-[#191919]/60 min-h-0 min-w-0"
                         )
@@ -958,17 +970,24 @@ class AuxiliaryPane(ui.element):
                 with ui.row().classes(
                     "px-3 py-1.5 bg-[#151515] border-b border-[#222222] items-center gap-2 w-full shrink-0 overflow-x-auto text-[11px]"
                 ):
-                    ui.label("CHECKPOINT:").classes("text-[10px] font-semibold text-[#6e6e6e] tracking-wider shrink-0")
+                    ui.label("CHECKPOINT:").classes(
+                        "text-[10px] font-semibold text-[#6e6e6e] tracking-wider shrink-0"
+                    )
                     for cp in self.checkpoints:
                         lid = cp.get("leaf_id", "")
-                        is_cur = lid == self.selected_checkpoint_leaf or (self.selected_checkpoint_leaf is None and cp.get("is_current"))
+                        is_cur = lid == self.selected_checkpoint_leaf or (
+                            self.selected_checkpoint_leaf is None
+                            and cp.get("is_current")
+                        )
                         label = cp.get("label", lid[:8])
                         (
                             ui.button(
                                 label,
-                                on_click=lambda leaf=lid: self._handle_select_checkpoint(leaf),
+                                on_click=lambda leaf=lid: (
+                                    self._handle_select_checkpoint(leaf)
+                                ),
                             )
-                            .props('flat dense no-caps')
+                            .props("flat dense no-caps")
                             .classes(
                                 f"px-2 py-0.5 rounded text-[10px] font-mono "
                                 f"{'bg-cyan-950 text-cyan-300 border border-cyan-800' if is_cur else 'bg-[#191919] text-[#6e6e6e] hover:text-[#cccccc]'}"
@@ -981,10 +1000,16 @@ class AuxiliaryPane(ui.element):
                     "text-[11px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
                 )
                 if not self.changed_files:
-                    with ui.column().classes("p-8 items-center justify-center text-[#6e6e6e] gap-2 w-full"):
+                    with ui.column().classes(
+                        "p-8 items-center justify-center text-[#6e6e6e] gap-2 w-full"
+                    ):
                         AntigravityIcon("overview_tab", size=24)
-                        ui.label("Working tree clean").classes("text-[12px] font-medium text-[#cccccc]")
-                        ui.label("No uncommitted changes or checkpoint diffs.").classes("text-[11px]")
+                        ui.label("Working tree clean").classes(
+                            "text-[12px] font-medium text-[#cccccc]"
+                        )
+                        ui.label("No uncommitted changes or checkpoint diffs.").classes(
+                            "text-[11px]"
+                        )
                 else:
                     for cf in self.changed_files:
                         expanded = self.expanded_diff_files.get(cf.path, True)
@@ -1015,13 +1040,21 @@ class AuxiliaryPane(ui.element):
                                 with ui.row().classes(
                                     "items-center gap-1.5 font-mono text-[11px]"
                                 ):
-                                    ui.label(f"+{cf.additions}").classes("text-emerald-400")
-                                    ui.label(f"-{cf.deletions}").classes("text-rose-400")
+                                    ui.label(f"+{cf.additions}").classes(
+                                        "text-emerald-400"
+                                    )
+                                    ui.label(f"-{cf.deletions}").classes(
+                                        "text-rose-400"
+                                    )
                                     if self.mvge_mode:
                                         ui.button(
                                             "Revert",
-                                            on_click=lambda p=cf.path: self._handle_restore_file(p),
-                                        ).props("flat dense no-caps size=xs color=negative").tooltip("Restore file from checkpoint")
+                                            on_click=lambda p=cf.path: (
+                                                self._handle_restore_file(p)
+                                            ),
+                                        ).props(
+                                            "flat dense no-caps size=xs color=negative"
+                                        ).tooltip("Restore file from checkpoint")
 
                         if expanded:
                             with (
@@ -1590,9 +1623,13 @@ class AuxiliaryPane(ui.element):
 
     def _render_mvge_subagents_view(self) -> None:
         if not self.live_submvges:
-            with ui.column().classes("flex-1 p-8 items-center justify-center text-[#6e6e6e] gap-3 text-center"):
+            with ui.column().classes(
+                "flex-1 p-8 items-center justify-center text-[#6e6e6e] gap-3 text-center"
+            ):
                 AntigravityIcon("subagent", size=28, classes="text-[#cccccc]")
-                ui.label("No Sub-Mvges Active").classes("text-[13px] font-medium text-[#cccccc]")
+                ui.label("No Sub-Mvges Active").classes(
+                    "text-[13px] font-medium text-[#cccccc]"
+                )
                 ui.label(
                     "Sub-Mvges are isolated child Mvge instances spawned by summon_mvge or delegate_to_mvge.\n"
                     "They execute in their own persistent child Tomes with optional Git worktree isolation."
@@ -1600,56 +1637,115 @@ class AuxiliaryPane(ui.element):
             return
 
         selected_id = self.selected_subagent_id or self.live_submvges[0]["sub_mvge_id"]
-        selected = next((m for m in self.live_submvges if m.get("sub_mvge_id") == selected_id), self.live_submvges[0])
+        selected = next(
+            (m for m in self.live_submvges if m.get("sub_mvge_id") == selected_id),
+            self.live_submvges[0],
+        )
 
-        with ui.row().props('data-testid="subagents-inspector-view"').classes("flex-1 w-full h-full overflow-hidden gap-0 no-wrap"):
+        with (
+            ui.row()
+            .props('data-testid="subagents-inspector-view"')
+            .classes("flex-1 w-full h-full overflow-hidden gap-0 no-wrap")
+        ):
             # Submvge Sidebar
-            with ui.column().classes("w-[200px] h-full bg-[#151515] border-r border-[#222222] p-2 shrink-0 gap-1 overflow-y-auto"):
-                ui.label("Child Sub-Mvges").classes("px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]")
+            with ui.column().classes(
+                "w-[200px] h-full bg-[#151515] border-r border-[#222222] p-2 shrink-0 gap-1 overflow-y-auto"
+            ):
+                ui.label("Child Sub-Mvges").classes(
+                    "px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#6e6e6e]"
+                )
                 for item in self.live_submvges:
                     mid = item.get("sub_mvge_id", "")
                     is_sel = mid == selected.get("sub_mvge_id")
                     status = item.get("status", "running")
-                    status_color = "text-emerald-400" if status == "running" else "text-[#6e6e6e]"
-                    with ui.button(on_click=lambda i=mid: self._select_subagent(i)).props("flat dense no-caps").classes(
-                        f"w-full px-2 py-1.5 rounded text-left flex flex-col items-start gap-0.5 font-normal "
-                        f"{'bg-[#272727] text-[#cccccc]' if is_sel else 'text-[#6e6e6e] hover:text-[#cccccc] hover:bg-[#191919]'}"
+                    status_color = (
+                        "text-emerald-400" if status == "running" else "text-[#6e6e6e]"
+                    )
+                    with (
+                        ui.button(on_click=lambda i=mid: self._select_subagent(i))
+                        .props("flat dense no-caps")
+                        .classes(
+                            f"w-full px-2 py-1.5 rounded text-left flex flex-col items-start gap-0.5 font-normal "
+                            f"{'bg-[#272727] text-[#cccccc]' if is_sel else 'text-[#6e6e6e] hover:text-[#cccccc] hover:bg-[#191919]'}"
+                        )
                     ):
                         with ui.row().classes("items-center justify-between w-full"):
-                            ui.label(item.get("role", "worker")).classes("text-[11px] font-medium truncate")
-                            ui.badge(status, color="positive" if status == "running" else "grey-8").props("dense text-[9px]")
-                        ui.label(f"{item.get('model_id', 'inherit')} • {item.get('mana_used', 0)} mana").classes(f"text-[9px] font-mono {status_color}")
+                            ui.label(item.get("role", "worker")).classes(
+                                "text-[11px] font-medium truncate"
+                            )
+                            ui.badge(
+                                status,
+                                color="positive" if status == "running" else "grey-8",
+                            ).props("dense text-[9px]")
+                        ui.label(
+                            f"{item.get('model_id', 'inherit')} • {item.get('mana_used', 0)} mana"
+                        ).classes(f"text-[9px] font-mono {status_color}")
 
             # Submvge Detail
             with ui.column().classes("flex-1 h-full p-4 overflow-y-auto gap-3"):
-                with ui.row().classes("w-full items-center justify-between pb-2 border-b border-[#222222]"):
+                with ui.row().classes(
+                    "w-full items-center justify-between pb-2 border-b border-[#222222]"
+                ):
                     with ui.column().classes("gap-0.5"):
                         with ui.row().classes("items-center gap-2"):
-                            ui.label(selected.get("role", "Sub-Mvge").capitalize()).classes("text-[14px] font-medium text-[#cccccc]")
-                            ui.badge(selected.get("status", "running"), color="positive" if selected.get("status") == "running" else "grey-8").props("dense text-[10px]")
-                        ui.label(f"ID: {selected.get('sub_mvge_id')} • Model: {selected.get('model_id')} • Workspace: {selected.get('workspace', 'inherit')}").classes("text-[10px] font-mono text-[#6e6e6e]")
+                            ui.label(
+                                selected.get("role", "Sub-Mvge").capitalize()
+                            ).classes("text-[14px] font-medium text-[#cccccc]")
+                            ui.badge(
+                                selected.get("status", "running"),
+                                color="positive"
+                                if selected.get("status") == "running"
+                                else "grey-8",
+                            ).props("dense text-[10px]")
+                        ui.label(
+                            f"ID: {selected.get('sub_mvge_id')} • Model: {selected.get('model_id')} • Workspace: {selected.get('workspace', 'inherit')}"
+                        ).classes("text-[10px] font-mono text-[#6e6e6e]")
                     with ui.row().classes("items-center gap-1.5"):
                         ui.button(
                             "Kill",
                             icon="close",
-                            on_click=lambda: self._handle_kill_submvge(selected.get("sub_mvge_id", "")),
-                        ).props("flat dense no-caps color=negative").classes("text-[11px]")
+                            on_click=lambda: self._handle_kill_submvge(
+                                selected.get("sub_mvge_id", "")
+                            ),
+                        ).props("flat dense no-caps color=negative").classes(
+                            "text-[11px]"
+                        )
 
                 if selected.get("effective_spells"):
                     with ui.row().classes("items-center gap-1 flex-wrap"):
                         ui.label("Spells:").classes("text-[10px] text-[#6e6e6e]")
                         for sp in selected["effective_spells"]:
-                            ui.badge(sp, color="dark").props("dense text-[10px] font-mono text-[#cccccc]")
+                            ui.badge(sp, color="dark").props(
+                                "dense text-[10px] font-mono text-[#cccccc]"
+                            )
 
                 if selected.get("summary"):
-                    with ui.column().classes("w-full p-2.5 rounded bg-[#191919] border border-[#222222] gap-1"):
-                        ui.label("Current Focus / Summary").classes("text-[10px] font-semibold text-[#6e6e6e] uppercase")
-                        ui.label(selected["summary"]).classes("text-[11px] text-[#cccccc]")
+                    with ui.column().classes(
+                        "w-full p-2.5 rounded bg-[#191919] border border-[#222222] gap-1"
+                    ):
+                        ui.label("Current Focus / Summary").classes(
+                            "text-[10px] font-semibold text-[#6e6e6e] uppercase"
+                        )
+                        ui.label(selected["summary"]).classes(
+                            "text-[11px] text-[#cccccc]"
+                        )
 
                 # Message child submvge input
-                with ui.column().classes("w-full mt-auto p-2 rounded bg-[#151515] border border-[#222222] gap-1.5"):
-                    ui.label("Send Steering Message to Child").classes("text-[10px] text-[#6e6e6e] uppercase font-semibold")
-                    msg_input = ui.input(placeholder="Send follow-up instruction to sub-mvge...").props("dense borderless").classes("w-full font-mono text-[11px] text-[#cccccc] bg-[#101010] px-2 rounded")
+                with ui.column().classes(
+                    "w-full mt-auto p-2 rounded bg-[#151515] border border-[#222222] gap-1.5"
+                ):
+                    ui.label("Send Steering Message to Child").classes(
+                        "text-[10px] text-[#6e6e6e] uppercase font-semibold"
+                    )
+                    msg_input = (
+                        ui.input(
+                            placeholder="Send follow-up instruction to sub-mvge..."
+                        )
+                        .props("dense borderless")
+                        .classes(
+                            "w-full font-mono text-[11px] text-[#cccccc] bg-[#101010] px-2 rounded"
+                        )
+                    )
                     target_sub_id = selected.get("sub_mvge_id", "")
                     with ui.row().classes("justify-end w-full"):
                         ui.button(
@@ -1658,7 +1754,9 @@ class AuxiliaryPane(ui.element):
                                 self._handle_message_submvge(sid, inp.value),
                                 setattr(inp, "value", ""),
                             ),
-                        ).props("flat dense no-caps color=primary").classes("text-[11px]")
+                        ).props("flat dense no-caps color=primary").classes(
+                            "text-[11px]"
+                        )
 
     def _handle_select_checkpoint(self, leaf_id: str) -> None:
         self.selected_checkpoint_leaf = leaf_id
@@ -1668,11 +1766,16 @@ class AuxiliaryPane(ui.element):
 
     def _handle_restore_file(self, path: str) -> None:
         if self.on_aux_action:
-            self.on_aux_action("restore_checkpoint_file", {"path": path, "leaf_id": self.selected_checkpoint_leaf})
+            self.on_aux_action(
+                "restore_checkpoint_file",
+                {"path": path, "leaf_id": self.selected_checkpoint_leaf},
+            )
 
     def _handle_message_submvge(self, sub_mvge_id: str, message: str) -> None:
         if self.on_aux_action:
-            self.on_aux_action("message_submvge", {"sub_mvge_id": sub_mvge_id, "message": message})
+            self.on_aux_action(
+                "message_submvge", {"sub_mvge_id": sub_mvge_id, "message": message}
+            )
 
     def _handle_kill_submvge(self, sub_mvge_id: str) -> None:
         if self.on_aux_action:
