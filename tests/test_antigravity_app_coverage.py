@@ -652,8 +652,6 @@ def test_parse_request_query():
 
 def test_register_antigravity_routes_body():
     """register_antigravity_routes: registers '/' page."""
-    from nicegui.client import Client
-
     if "/" not in Client.page_routes.values():
         register_antigravity_routes("/")
     assert "/" in Client.page_routes.values()
