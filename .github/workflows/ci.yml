@@ -15,7 +15,6 @@ jobs:
     uses: magitech-ai/.github/.github/workflows/python-ci.yml@main
     with:
       python-version: "3.13"
-      enforce-coverage: false
       lint-commands: |
         uv run ruff check src/ tests/ scripts/
         uv run ruff format --check src/ tests/ scripts/
