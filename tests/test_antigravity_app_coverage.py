@@ -9,6 +9,7 @@ register_antigravity_routes, and main.
 
 from unittest.mock import MagicMock, patch
 
+from nicegui.client import Client
 from starlette.requests import Request
 
 from nicegui_ai.antigravity.app import (
@@ -656,6 +657,20 @@ def test_register_antigravity_routes_body():
     if "/" not in Client.page_routes.values():
         register_antigravity_routes("/")
     assert "/" in Client.page_routes.values()
+
+    # parse_request_query works on a Starlette Request
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "scheme": "https",
+        "server": ("example.com", 443),
+        "client": ("127.0.0.1", 1234),
+        "path": "/",
+        "query_string": b"openSettings=true&auxTab=review",
+        "headers": [],
+    }
+    req = Request(scope)
+    assert parse_request_query(req) == {"openSettings": "true", "auxTab": "review"}
 
 
 def test_main(monkeypatch):
