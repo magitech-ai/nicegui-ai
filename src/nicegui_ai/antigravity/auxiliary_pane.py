@@ -1772,7 +1772,7 @@ class AuxiliaryPane(ui.element):
             )
 
     def _send_submvge_and_clear(
-        self, sub_mvge_id: str, message: str, input_widget: object
+        self, sub_mvge_id: str, message: str, input_widget: Any
     ) -> None:
         self._handle_message_submvge(sub_mvge_id, message)
         input_widget.value = ""
