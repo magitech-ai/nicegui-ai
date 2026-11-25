@@ -5,7 +5,7 @@ description = "Modern AI agent UI primitives for NiceGUI (1:1 port of assistant-
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "Malcom Van Luther", email = "ivmno1special@gmail.com" }
+    { name = "magitech-ai" }
 ]
 requires-python = ">=3.13"
 keywords = [
