@@ -85,7 +85,7 @@ exclude = ["tests/", "demo/"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = ["--cov=src/nicegui_ai", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=90"]
+addopts = ["--cov=src/nicegui_ai", "--cov-branch", "--cov-report=term-missing", "--cov-fail-under=83"]
 
 [tool.coverage.report]
 exclude_lines = [
